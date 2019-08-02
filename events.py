@@ -10,6 +10,7 @@ class MouseHandler:
         self.released = False
         self.held = False
         self.position = (0, 0)
+        self.relative = (0, 0)
 
 
 class KeyHandler:
@@ -32,6 +33,7 @@ def update():
     mouse.clicked = False
     mouse.released = False
     mouse.position = pygame.mouse.get_pos()
+    mouse.relative = pygame.mouse.get_rel()
 
     keys.released = False
     keys.released_key = None

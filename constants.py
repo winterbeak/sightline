@@ -15,3 +15,7 @@ YELLOW = (255, 255, 0)
 ORANGE = (255, 200, 0)
 
 TRANSPARENT = (0, 255, 0)
+
+
+def add_tuples(tuple1, tuple2):
+    return tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]
