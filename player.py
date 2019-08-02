@@ -17,6 +17,7 @@ class Player:
 
     def update_movement(self):
         self.angle += (float(events.mouse.relative[0]) / 100)
+        self.angle = geometry.mod_angle(self.angle)
 
         key_a = pygame.K_a in events.keys.queue
         key_w = pygame.K_w in events.keys.queue
@@ -39,6 +40,7 @@ class Player:
             angle += math.pi
 
         if move:
+            angle = geometry.mod_angle(angle)
             difference = geometry.vector_to_difference(angle, 1.0)
             self.move(difference)
 
