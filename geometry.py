@@ -2,6 +2,7 @@ import pygame
 import math
 
 import constants
+import utility
 
 pygame.init()
 
@@ -81,7 +82,7 @@ def closest_wall_level(position, level, angle):
     shortest_distance = 10000000.0
     closest = None
 
-    for polygon in level.polygons:
+    for polygon in level.collision:
         for segment in polygon.segments:
             intersection = line_segment_intersection(line, segment)
             if intersection:
@@ -100,7 +101,7 @@ def closest_wall_level_intersection(position, level, angle):
     shortest_distance = 10000000.0
     closest_intersection = None
 
-    for polygon in level.polygons:
+    for polygon in level.collision:
         for segment in polygon.segments:
             intersection = line_segment_intersection(line, segment)
             if intersection:
@@ -247,8 +248,14 @@ class Segment:
     def print(self):
         print(self.point1, self.point2)
 
-    def draw_debug(self, surface):
-        pygame.draw.line(surface, self.color, self.point1, self.point2)
+    def draw_debug(self, surface, offset=(0, 0)):
+        if offset != (0, 0):
+            point1 = utility.add_tuples(self.point1, offset)
+            point2 = utility.add_tuples(self.point2, offset)
+        else:
+            point1 = self.point1
+            point2 = self.point2
+        pygame.draw.line(surface, self.color, point1, point2)
 
 
 class Line:
@@ -266,12 +273,21 @@ class Line:
 
 class Polygon:
     def __init__(self, point_list, closed=True):
+        self.point_list = point_list
         self.segments = points_to_segment_list(point_list, closed)
         self.closed = closed
+        self.color = constants.WHITE
 
     def set_colors(self, colors_list):
         for index, color in enumerate(colors_list):
             self.segments[index].color = color
+
+    def draw_debug(self, surface, offset=(0, 0)):
+        """Draws the polygon.  Does not come with an outline."""
+        point_list = self.point_list
+        if offset != (0, 0):
+            point_list = tuple(utility.add_tuples(offset, point) for point in point_list)
+        pygame.draw.polygon(surface, self.color, point_list)
 
 
 def points_to_segment_list(point_list, closed=True):

@@ -14,8 +14,13 @@ MAGENTA = (255, 0, 255)
 YELLOW = (255, 255, 0)
 ORANGE = (255, 200, 0)
 
+LIGHT_GREY = (230, 230, 230)
+PALE_RED = (255, 230, 230)
+PALE_GREEN = (230, 255, 230)
+PALE_BLUE = (230, 230, 255)
+PALE_CYAN = (230, 255, 255)
+PALE_MAGENTA = (255, 230, 255)
+PALE_YELLOW = (255, 255, 230)
+PALE_ORANGE = (255, 230, 200)
+
 TRANSPARENT = (0, 255, 0)
-
-
-def add_tuples(tuple1, tuple2):
-    return tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]
