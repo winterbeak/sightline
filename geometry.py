@@ -20,6 +20,10 @@ def angle_to_slope(angle):
     return math.tan(angle)
 
 
+def slope_to_angle(slope):
+    return math.atan(slope)
+
+
 def angle_between(from_position, to_position):
     delta_x = to_position[0] - from_position[0]
     delta_y = to_position[1] - from_position[1]
@@ -36,7 +40,43 @@ def angles_close(angle1, angle2):
     return False
 
 
-def closest_wall(position, level, angle):
+def closest_wall(position, polygon, angle):
+    line = Line(position, angle_to_slope(angle))
+    shortest_distance = 10000000.0
+    closest = None
+
+    for segment in polygon.segments:
+        intersection = line_segment_intersection(line, segment)
+        if intersection:
+            distance_between = distance(position, intersection)
+            angle_check = angle_between(position, intersection)
+            if distance_between < shortest_distance:
+                if angles_close(angle, angle_check):
+                    shortest_distance = distance_between
+                    closest = segment
+
+    return closest
+
+
+def closest_wall_intersection(position, polygon, angle):
+    line = Line(position, angle_to_slope(angle))
+    shortest_distance = 10000000.0
+    closest_intersection = None
+
+    for segment in polygon.segments:
+        intersection = line_segment_intersection(line, segment)
+        if intersection:
+            distance_between = distance(position, intersection)
+            angle_check = angle_between(position, intersection)
+            if distance_between < shortest_distance:
+                if angles_close(angle, angle_check):
+                    shortest_distance = distance_between
+                    closest_intersection = intersection
+
+    return closest_intersection
+
+
+def closest_wall_level(position, level, angle):
     line = Line(position, angle_to_slope(angle))
     shortest_distance = 10000000.0
     closest = None
@@ -55,6 +95,37 @@ def closest_wall(position, level, angle):
     return closest
 
 
+def closest_wall_level_intersection(position, level, angle):
+    line = Line(position, angle_to_slope(angle))
+    shortest_distance = 10000000.0
+    closest_intersection = None
+
+    for polygon in level.polygons:
+        for segment in polygon.segments:
+            intersection = line_segment_intersection(line, segment)
+            if intersection:
+                distance_between = distance(position, intersection)
+                angle_check = angle_between(position, intersection)
+                if distance_between < shortest_distance:
+                    if angles_close(angle, angle_check):
+                        shortest_distance = distance_between
+                        closest_intersection = intersection
+
+    return closest_intersection
+
+
+def component_in_direction(vector, direction):
+    """Returns the magnitude of the component of a vector that points in
+    the given direction.
+    NOTE: sometimes is negative, which I take advantage of when
+    calculating angular velocity
+    vector is an (angle, magnitude) pair.
+    """
+    angle, magnitude = vector
+    delta_angle = abs(direction - angle)
+    return magnitude * math.cos(delta_angle)
+
+
 def min_and_max(num1, num2):
     """Returns a tuple, which is the (minimum, maximum) of the two numbers."""
     if num1 < num2:
@@ -63,30 +134,13 @@ def min_and_max(num1, num2):
         return num2, num1
 
 
-def on_segment(point, segment, know_on_line=False):
-    """Checks if a point is on a given segment.
-    If the point is already known to be on the line of the segment (i.e. the
-    point is on the line you get from stretching the segment infinitely), then
-    you can skip some calculations by setting know_on_line to True.
-    """
-    if math.isinf(segment.slope):
-        if know_on_line or math.isclose(segment.x_intercept, point[0]):
-            min_y, max_y = min_and_max(segment.point1[1], segment.point2[1])
+def on_segment(point, segment):
+    """Checks if a point is on a given segment."""
+    distance_1 = distance(point, segment.point1)
+    distance_2 = distance(point, segment.point2)
+    segment_length = distance(segment.point1, segment.point2)
 
-            if min_y < point[1] < max_y:
-                return True
-
-        return False
-
-    if not know_on_line:
-        check_y = segment.slope * point[0] + segment.y_intercept
-
-        if not math.isclose(point[1], check_y):
-            return False
-
-    min_x, max_x = min_and_max(segment.point1[0], segment.point2[0])
-
-    if min_x < point[0] < max_x:
+    if abs(distance_1 + distance_2 - segment_length) < 0.0001:
         return True
     return False
 
@@ -112,7 +166,7 @@ def line_segment_intersection(line, segment):
         x = (b2 - b1) / (m1 - m2)
         y = m1 * x + b1
 
-    if on_segment((x, y), segment, True):
+    if on_segment((x, y), segment):
         return x, y
 
     return None
@@ -142,6 +196,12 @@ def difference_to_vector(difference):
     # print("%.2f / %.2f" % (delta_y, delta_x))
 
     return angle, magnitude
+
+
+def points_to_vector(from_point, to_point):
+    x1, y1 = from_point
+    x2, y2 = to_point
+    return difference_to_vector((x2 - x1, y2 - y1))
 
 
 def distance(point1, point2):
@@ -205,15 +265,16 @@ class Line:
 
 
 class Polygon:
-    def __init__(self, point_list):
-        self.segments = points_to_segment_list(point_list)
+    def __init__(self, point_list, closed=True):
+        self.segments = points_to_segment_list(point_list, closed)
+        self.closed = closed
 
     def set_colors(self, colors_list):
         for index, color in enumerate(colors_list):
             self.segments[index].color = color
 
 
-def points_to_segment_list(point_list):
+def points_to_segment_list(point_list, closed=True):
     """Returns a list of segments from point 1 to point 2, point 2 to point 3
     all the way to point N to point 1.  All points are (x, y) pairs.
     Sending one or less points returns an empty list.  Sending two points
@@ -228,6 +289,97 @@ def points_to_segment_list(point_list):
     segment_list = []
     for i in range(last_point):
         segment_list.append(Segment(point_list[i], point_list[i + 1]))
-    segment_list.append(Segment(point_list[last_point], point_list[0]))
+    if closed:
+        segment_list.append(Segment(point_list[last_point], point_list[0]))
 
     return segment_list
+
+
+def segment_extended_intersection(segment_1, segment_2):
+    """Returns the intersection of two segments, as if the segments were
+    extended infinitely.
+    Note that if there are infinite intersection points, or if there are
+    no intersection points, the function will return None.
+    """
+    if math.isclose(segment_1.slope, segment_2.slope):
+        return None
+
+    m1 = segment_1.slope
+    m2 = segment_2.slope
+    b1 = segment_1.y_intercept
+    b2 = segment_2.y_intercept
+
+    if math.isinf(segment_1.slope):
+        x = segment_1.x_intercept
+        y = m2 * x + b2
+
+    elif math.isinf(segment_2.slope):
+        x = segment_2.x_intercept
+        y = m1 * x + b1
+
+    else:
+        x = (b2 - b1) / (m1 - m2)
+        y = m1 * x + b1
+    return x, y
+
+
+def segments_collide(segment_1, segment_2):
+    intersection = segment_extended_intersection(segment_1, segment_2)
+    if intersection:
+        if on_segment(intersection, segment_1):
+            if on_segment(intersection, segment_2):
+                return True
+
+    return False
+
+
+def inverse(num):
+    """Returns the inverse of a number.
+    Interestingly, Python automatically handles 1.0 / inf.
+    """
+    if num == 0.0:
+        return math.inf
+    return 1.0 / num
+
+
+def point_and_segment(point, segment):
+    """Previously known as shortest_segment_between_point_and_segment().
+    Returns the shortest line segment that would connect a given point and
+    a given Segment.
+    Returns None if the point is already on the segment.
+    """
+    if on_segment(point, segment):
+        return None
+
+    check_slope = -inverse(segment.slope)
+    if math.isinf(check_slope):
+        # generates a segment that is arbitrarily 10 unit long
+        check_segment = Segment(point, (point[0], point[1] + 10))
+    else:
+        check_y_intercept = y_intercept(point, check_slope)
+        check_segment = Segment(point, (0.0, check_y_intercept))
+
+    intersection = segment_extended_intersection(check_segment, segment)
+    if not intersection:
+        return None
+
+    if on_segment(intersection, segment):
+        return Segment(intersection, point)
+
+    else:
+        distance1 = distance(point, segment.point1)
+        distance2 = distance(point, segment.point2)
+        if distance1 < distance2:
+            return Segment(point, segment.point1)
+        else:
+            return Segment(point, segment.point2)
+
+
+SCREEN_CORNERS = ((0, 0), (constants.SCREEN_WIDTH, 0),
+                  (constants.SCREEN_WIDTH, constants.SCREEN_WIDTH),
+                  (0, constants.SCREEN_WIDTH))
+SCREEN_POLYGON = Polygon(SCREEN_CORNERS)
+
+
+def screen_edge(point, angle):
+    return closest_wall_intersection(point, SCREEN_POLYGON, angle)

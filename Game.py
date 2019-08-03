@@ -22,15 +22,15 @@ def screen_update(fps):
     clock.tick(fps)
 
 
-FOV = math.pi * 3 / 5
+FOV = player.FOV
 
 
 def draw_view(surface, y):
-    for x in range(constants.SCREEN_WIDTH):
+    for x in range(0, constants.SCREEN_WIDTH, 2):
         angle = player.angle - (FOV / 2) + (FOV / constants.SCREEN_WIDTH * x)
-        segment = geometry.closest_wall(player.position, play_screen.level, angle)
+        segment = geometry.closest_wall_level(player.position, play_screen.level, angle)
         if segment:
-            surface.fill(segment.color, (x, y, 1, 20))
+            surface.fill(segment.color, (x, y, 2, 20))
 
 
 class PlayScreen:
@@ -38,28 +38,34 @@ class PlayScreen:
         self.level = None
 
     def update(self):
-        player.update_movement()
+        player.update_movement(self.level)
 
     def draw(self, surface):
         draw_view(surface, 400)
         self.level.draw_debug(surface)
-        # player.draw_debug(surface)
+        player.draw_debug(surface, play_screen.level)
 
 
 player = player.Player()
 player.go_to((200, 200))
 play_screen = PlayScreen()
 
+# Testing level
 level_test_shape1_points = ((100, 100), (400, 200), (350, 400), (100, 200))
-level_test_polygon1 = geometry.Polygon(level_test_shape1_points)
+level_test_polygon1 = geometry.Polygon(level_test_shape1_points, False)
 level_test_polygon1.set_colors((constants.GREEN, constants.ORANGE,
-                                constants.RED, constants.MAGENTA))
+                                constants.RED))
 
 level_test_shape2_points = ((240, 240), (240, 260), (260, 260), (240, 240))
 level_test_polygon2 = geometry.Polygon(level_test_shape2_points)
 level_test_polygon2.set_colors((constants.CYAN, ) * 3)
 
-level_test = levels.Level((level_test_polygon1, level_test_polygon2))
+level_test_shape3_points = ((10, 450), (250, 460), (490, 450))
+level_test_polygon3 = geometry.Polygon(level_test_shape3_points, False)
+level_test_polygon3.set_colors((constants.MAGENTA, constants.YELLOW))
+
+level_test = levels.Level((level_test_polygon1, level_test_polygon2,
+                           level_test_polygon3))
 
 play_screen.level = level_test
 
