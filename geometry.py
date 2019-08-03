@@ -391,6 +391,23 @@ def point_and_segment(point, segment):
             return Segment(point, segment.point2)
 
 
+def point_in_polygon(point, polygon):
+    total = 0
+    line = Line(point, 1.0)
+    angle = slope_to_angle(line.slope)
+    for segment in polygon.segments:
+        intersection = line_segment_intersection(line, segment)
+
+        if intersection:
+            check_angle = angle_between(point, intersection)
+            if angles_close(angle, check_angle):
+                total += 1
+
+    if total % 2 == 0:
+        return False
+    return True
+
+
 SCREEN_CORNERS = ((0, 0), (constants.SCREEN_WIDTH, 0),
                   (constants.SCREEN_WIDTH, constants.SCREEN_WIDTH),
                   (0, constants.SCREEN_WIDTH))

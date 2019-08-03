@@ -10,6 +10,7 @@ class Level:
     def __init__(self, collision, goals):
         self.collision = collision
         self.goals = goals
+        self.goal_count = len(goals)
 
     def draw_debug(self, surface, offset=(0, 0)):
         for polygon in self.goals:

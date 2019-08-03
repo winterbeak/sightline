@@ -62,7 +62,19 @@ def draw_view(surface, y):
             surface.fill(segment.color, (x, y, 2, 20))
 
 
+class Signal:
+    RADIUS = 5
+
+    def __init__(self, position):
+        self.position = position
+        self.x = position[0]
+        self.y = position[1]
+
+
 class PlayScreen:
+    SIGNAL_SPACING = 30
+    SIGNAL_GAP = SIGNAL_SPACING - Signal.RADIUS * 2
+
     PAUSE_FADE_SPEED = 5
     OVERLAY_OPACITY = 0.75
 
@@ -77,6 +89,10 @@ class PlayScreen:
         self.mouse_lock = 0  # fixes sudden movement after exiting from pause
 
         self.level = None
+
+        self.signals = []
+        self.placed_signals = 0
+        self.signals_width = 0
 
         self.paused = False
         self.pause_alpha = 0
@@ -111,6 +127,9 @@ class PlayScreen:
                     self.pause_alpha = 0
 
                 self.pause_overlay.set_alpha(self.pause_alpha * self.OVERLAY_OPACITY)
+
+            if events.mouse.released:
+                self.place_signal(player_entity.position)
 
         else:
             if self.pause_alpha < 255:
@@ -154,6 +173,19 @@ class PlayScreen:
 
     def draw(self, surface):
         draw_view(surface, 50)
+
+        y = 90
+        for signal in range(self.level.goal_count):
+            x = constants.SCREEN_MIDDLE_INT[0] - self.signals_width // 2
+            x += signal * self.SIGNAL_SPACING + Signal.RADIUS
+
+            if signal < self.placed_signals:
+                width = 0
+            else:
+                width = 1
+
+            pygame.draw.circle(surface, BLACK, (x, y), Signal.RADIUS, width)
+
         self.level.draw_debug(surface, (0, 50))
         player_entity.draw_debug(surface, play_screen.level, (0, 50))
 
@@ -199,6 +231,36 @@ class PlayScreen:
         pygame.mouse.set_visible(False)
         self.mouse_lock = 2
 
+    def load_level(self, level):
+        self.level = level
+        self.signals_width = self.SIGNAL_SPACING * level.goal_count - self.SIGNAL_GAP
+
+    def place_signal(self, position):
+        self.signals.append(Signal(position))
+        self.placed_signals += 1
+
+        if self.placed_signals == self.level.goal_count:
+            if self.check_win():
+                self.placed_signals = 0
+                self.signals = []
+                print("a")
+            else:
+                self.placed_signals = 0
+                self.signals = []
+
+    def check_win(self):
+        for polygon in self.level.goals:
+            for signal in self.signals:
+                if geometry.point_in_polygon(signal.position, polygon):
+                    break
+            else:
+                break
+        else:
+            return True
+
+        return False
+
+
 
 play_screen = PlayScreen()
 
@@ -238,7 +300,7 @@ L0.set_goal_colors((PALE_BLUE, PALE_ORANGE, PALE_MAGENTA, PALE_RED))
 # level_test = levels.Level((level_test_polygon1, level_test_polygon2,
 #                            level_test_polygon3))
 
-play_screen.level = L0
+play_screen.load_level(L0)
 
 player_entity = player.Player()
 player_entity.go_to((250, 250))
