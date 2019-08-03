@@ -1,7 +1,9 @@
+import sound
+
 import pygame
 import sys
 import os
-# import math
+import math
 
 import geometry
 import utility
@@ -44,6 +46,9 @@ PALE_MAGENTA = constants.PALE_MAGENTA
 PALE_YELLOW = constants.PALE_YELLOW
 PALE_ORANGE = constants.PALE_ORANGE
 
+win_sound = sound.load("win")
+lose_sound = sound.load("lose")
+
 
 def screen_update(fps):
     pygame.display.flip()
@@ -65,13 +70,32 @@ def draw_view(surface, y):
 class Signal:
     RADIUS = 5
 
-    def __init__(self, position):
+    def __init__(self, position, level):
         self.position = position
         self.x = position[0]
         self.y = position[1]
 
+        for polygon in level.goals:
+            if geometry.point_in_polygon(position, polygon):
+                if polygon.color in utility.saturated_counterpart:
+                    self.color = utility.saturated_counterpart[polygon.color]
+                else:
+                    self.color = WHITE
+                self.satisfied = True
+                break
+
+        else:
+            self.color = WHITE
+            self.satisfied = False
+
 
 class PlayScreen:
+    PAUSE_LENGTH = 30
+    VERDICT_LENGTH = 75
+    ZOOM_MAX = 1.2
+    ZOOM_A = abs(ZOOM_MAX - 1.0)
+    ZOOM_K = math.pi / (2 * VERDICT_LENGTH)
+
     SIGNAL_SPACING = 30
     SIGNAL_GAP = SIGNAL_SPACING - Signal.RADIUS * 2
 
@@ -79,11 +103,15 @@ class PlayScreen:
     OVERLAY_OPACITY = 0.75
 
     RESUME = 0
-    SENSITIVITY_SLIDER = 1
-    EXIT = 2
+    VOLUME_SLIDER = 1
+    SENSITIVITY_SLIDER = 2
+    EXIT = 3
+
     HITBOXES = (pygame.Rect(200, 100, 100, 40),
                 pygame.Rect(230, 150, 150, 40),
-                pygame.Rect(200, 400, 100, 40))
+                pygame.Rect(230, 200, 150, 40),
+                pygame.Rect(200, 250, 100, 40))
+
 
     def __init__(self):
         self.mouse_lock = 0  # fixes sudden movement after exiting from pause
@@ -102,8 +130,18 @@ class PlayScreen:
 
         self.mouse_option = 0
 
+        self.volume_x = 150
         self.sensitivity_x = 30
 
+        self.won = True
+        self.verdicting = False
+        self.verdict_frame = 0
+        self.drama_pausing = False
+        self.drama_pause_frame = 0
+        self.resulting = False
+        self.result_frame = 0
+        self.zoom = 1.0
+        self.zoom_temp = pygame.Surface(constants.SCREEN_SIZE)
         self.quit_game = False
 
     def update(self):
@@ -131,6 +169,39 @@ class PlayScreen:
             if events.mouse.released:
                 self.place_signal(player_entity.position)
 
+            if self.verdicting:
+                if self.verdict_frame < self.VERDICT_LENGTH:
+                    self.verdict_frame += 1
+                    self.zoom = math.sin(self.ZOOM_K * self.verdict_frame)
+                    self.zoom = self.ZOOM_A * self.zoom + 1.0
+                else:
+                    self.verdicting = False
+                    self.verdict_frame = 0
+                    self.drama_pausing = True
+
+            elif self.drama_pausing:
+                if self.drama_pause_frame < self.PAUSE_LENGTH:
+                    self.drama_pause_frame += 1
+
+                else:
+                    sound.music_volume.fade_to(1.0)
+
+                    self.drama_pausing = False
+                    self.drama_pause_frame = 0
+                    self.resulting = True
+
+                    if not self.won:
+                        self.clear_signals()
+
+            elif self.resulting:
+                if self.result_frame < self.VERDICT_LENGTH:
+                    self.result_frame += 1
+                    self.zoom = math.sin(self.ZOOM_K * self.result_frame)
+                    self.zoom = -self.ZOOM_A * self.zoom + self.ZOOM_MAX
+                else:
+                    self.resulting = False
+                    self.result_frame = 0
+
         else:
             if self.pause_alpha < 255:
                 self.pause_alpha += self.PAUSE_FADE_SPEED
@@ -146,7 +217,10 @@ class PlayScreen:
                     break
 
             else:
-                if self.mouse_option == self.SENSITIVITY_SLIDER and events.mouse.held:
+                is_volume = self.mouse_option == self.VOLUME_SLIDER
+                is_sensitivity = self.mouse_option == self.SENSITIVITY_SLIDER
+
+                if (is_volume or is_sensitivity) and events.mouse.held:
                     pass
                 else:
                     self.mouse_option = -1
@@ -171,7 +245,37 @@ class PlayScreen:
                     value = x / rect.width / 200 + 0.001
                     player.sensitivity = value
 
+                elif self.mouse_option == self.VOLUME_SLIDER:
+                    rect = self.HITBOXES[self.SENSITIVITY_SLIDER]
+                    x = events.mouse.position[0] - rect.left
+                    if x < 0:
+                        x = 0
+                    elif x > rect.width:
+                        x = rect.width
+
+                    self.volume_x = x
+                    value = x / rect.width
+                    sound.volume_control.fade_to(value)
+
     def draw(self, surface):
+        if self.verdicting or self.resulting:
+            level_surface = self.zoom_temp
+            self.zoom_temp.fill(constants.WHITE)
+
+        else:
+            level_surface = surface
+
+        self.level.draw_debug(level_surface, (0, 50))
+        player_entity.draw_debug(level_surface, play_screen.level, (0, 50))
+
+        if self.verdicting or self.drama_pausing or self.resulting:
+            width = int(self.zoom * constants.SCREEN_WIDTH)
+            height = int(self.zoom * constants.SCREEN_HEIGHT)
+            zoom_surface = pygame.transform.scale(self.zoom_temp, (width, height))
+            x = -(width - constants.SCREEN_WIDTH) // 2
+            y = -(height - constants.SCREEN_HEIGHT) // 2
+            surface.blit(zoom_surface, (x, y))
+
         draw_view(surface, 50)
 
         y = 90
@@ -186,9 +290,6 @@ class PlayScreen:
 
             pygame.draw.circle(surface, BLACK, (x, y), Signal.RADIUS, width)
 
-        self.level.draw_debug(surface, (0, 50))
-        player_entity.draw_debug(surface, play_screen.level, (0, 50))
-
         if self.pause_alpha != 0:
             surface.blit(self.pause_overlay, (0, 0))
 
@@ -199,6 +300,12 @@ class PlayScreen:
                 new_surf = utility.black_image_alpha(rectangle_surface, self.pause_alpha * 0.1)
                 surface.blit(new_surf, rect.topleft)
 
+            text = utility.black_text_alpha(subtitle_font, "Paused", self.pause_alpha)
+            utility.blit_vert_center(surface, text, 46)
+
+            text = utility.black_text_alpha(small_font, "Resume", self.pause_alpha)
+            utility.blit_vert_center(surface, text, self.HITBOXES[self.RESUME].top + 10)
+
             rect = self.HITBOXES[self.SENSITIVITY_SLIDER]
             rect = pygame.Rect(rect.left + self.sensitivity_x, rect.top, 1, rect.h)
             rectangle_surface = pygame.Surface((rect.w, rect.h)).convert_alpha()
@@ -206,19 +313,28 @@ class PlayScreen:
             new_surf = utility.black_image_alpha(rectangle_surface, self.pause_alpha * 0.5)
             surface.blit(new_surf, rect.topleft)
 
-            text = utility.black_text_alpha(subtitle_font, "Paused", self.pause_alpha)
-            utility.blit_vert_center(surface, text, 46)
-
-            text = utility.black_text_alpha(small_font, "Resume", self.pause_alpha)
-            utility.blit_vert_center(surface, text, self.HITBOXES[self.RESUME].top + 10)
-
             text = utility.black_text_alpha(small_font, "Sensitivity", self.pause_alpha)
             x = constants.SCREEN_MIDDLE[0] - 120
-            y = self.HITBOXES[self.SENSITIVITY_SLIDER].top + 10
+            y = self.HITBOXES[self.SENSITIVITY_SLIDER].top + 9
+            surface.blit(text, (x, y))
+
+            rect = self.HITBOXES[self.VOLUME_SLIDER]
+            rect = pygame.Rect(rect.left + self.volume_x, rect.top, 1, rect.h)
+            rectangle_surface = pygame.Surface((rect.w, rect.h)).convert_alpha()
+            rectangle_surface.fill((255, 255, 255))
+            new_surf = utility.black_image_alpha(rectangle_surface, self.pause_alpha * 0.5)
+            surface.blit(new_surf, rect.topleft)
+
+            text = utility.black_text_alpha(small_font, "Volume", self.pause_alpha)
+            x = constants.SCREEN_MIDDLE[0] - 100
+            y = self.HITBOXES[self.VOLUME_SLIDER].top + 9
             surface.blit(text, (x, y))
 
             text = utility.black_text_alpha(small_font, "Exit", self.pause_alpha)
             utility.blit_vert_center(surface, text, self.HITBOXES[self.EXIT].top + 10)
+
+            text = utility.black_text_alpha(subtitle_font, "Help", self.pause_alpha)
+            utility.blit_vert_center(surface, text, 320)
 
     def pause(self):
         self.paused = True
@@ -231,22 +347,31 @@ class PlayScreen:
         pygame.mouse.set_visible(False)
         self.mouse_lock = 2
 
+    def clear_signals(self):
+        self.signals = []
+        self.placed_signals = 0
+
     def load_level(self, level):
         self.level = level
+
+        self.won = False
+
+        self.clear_signals()
         self.signals_width = self.SIGNAL_SPACING * level.goal_count - self.SIGNAL_GAP
 
     def place_signal(self, position):
-        self.signals.append(Signal(position))
-        self.placed_signals += 1
+        if self.placed_signals < self.level.goal_count:
+            self.signals.append(Signal(position, self.level))
+            self.placed_signals += 1
 
         if self.placed_signals == self.level.goal_count:
+            self.verdicting = True
+            sound.music_volume.fade_to(0.35)
             if self.check_win():
-                self.placed_signals = 0
-                self.signals = []
-                print("a")
+                sound.play(win_sound)
+                self.won = True
             else:
-                self.placed_signals = 0
-                self.signals = []
+                sound.play(lose_sound)
 
     def check_win(self):
         for polygon in self.level.goals:
@@ -259,7 +384,6 @@ class PlayScreen:
             return True
 
         return False
-
 
 
 play_screen = PlayScreen()
@@ -305,11 +429,15 @@ play_screen.load_level(L0)
 player_entity = player.Player()
 player_entity.go_to((250, 250))
 
+sound.load_music("music")
+sound.play_music()
+
 pygame.event.set_grab(True)
 pygame.mouse.set_visible(False)
 
 while True:
     events.update()
+    sound.update()
 
     play_screen.update()
     if play_screen.quit_game:

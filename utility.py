@@ -40,3 +40,27 @@ def black_image_alpha(surface, alpha):
     surface.blit(temp_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
 
     return surface.convert_alpha()
+
+
+pale_counterpart = {
+    constants.BLACK: constants.LIGHT_GREY,
+    constants.RED: constants.PALE_RED,
+    constants.GREEN: constants.PALE_GREEN,
+    constants.BLUE: constants.PALE_BLUE,
+    constants.CYAN: constants.PALE_CYAN,
+    constants.MAGENTA: constants.PALE_MAGENTA,
+    constants.YELLOW: constants.PALE_YELLOW,
+    constants.ORANGE: constants.PALE_ORANGE
+}
+
+
+saturated_counterpart = {
+    constants.LIGHT_GREY: constants.BLACK,
+    constants.PALE_RED: constants.RED,
+    constants.PALE_GREEN: constants.GREEN,
+    constants.PALE_BLUE: constants.BLUE,
+    constants.PALE_CYAN: constants.CYAN,
+    constants.PALE_MAGENTA: constants.MAGENTA,
+    constants.PALE_YELLOW: constants.YELLOW,
+    constants.PALE_ORANGE: constants.ORANGE
+}
