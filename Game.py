@@ -11,6 +11,7 @@ import constants
 import events
 import player
 import levels
+import ripples
 
 import debug
 
@@ -19,6 +20,7 @@ pygame.init()
 pygame.display.set_caption("GMTK 2019")
 
 final_display = pygame.display.set_mode(constants.SCREEN_SIZE)
+final_display.convert_alpha()
 
 clock = pygame.time.Clock()
 
@@ -48,6 +50,8 @@ PALE_ORANGE = constants.PALE_ORANGE
 
 win_sound = sound.load("win")
 lose_sound = sound.load("lose")
+
+level_offset = (0, 50)
 
 
 def screen_update(fps):
@@ -111,7 +115,6 @@ class PlayScreen:
                 pygame.Rect(230, 150, 150, 40),
                 pygame.Rect(230, 200, 150, 40),
                 pygame.Rect(200, 250, 100, 40))
-
 
     def __init__(self):
         self.mouse_lock = 0  # fixes sudden movement after exiting from pause
@@ -190,6 +193,24 @@ class PlayScreen:
                     self.drama_pause_frame = 0
                     self.resulting = True
 
+                    y = 90
+                    for index, signal in enumerate(self.signals):
+                        x = constants.SCREEN_MIDDLE_INT[0] - self.signals_width // 2
+                        x += index * self.SIGNAL_SPACING + Signal.RADIUS
+
+                        if self.won:
+                            color = signal.color
+                            anchor = utility.add_tuples(level_offset, constants.SCREEN_MIDDLE)
+                            position = utility.add_tuples(signal.position, level_offset)
+                            position = geometry.scale_position(position, anchor, self.zoom)
+                            position = utility.int_tuple(position)
+
+                            ripples.create_ripple(position, color, 30, 30)
+                        else:
+                            color = BLACK
+
+                        ripples.create_ripple((x, y), color, 30, 30)
+
                     if not self.won:
                         self.clear_signals()
 
@@ -265,8 +286,16 @@ class PlayScreen:
         else:
             level_surface = surface
 
-        self.level.draw_debug(level_surface, (0, 50))
-        player_entity.draw_debug(level_surface, play_screen.level, (0, 50))
+        self.level.draw_debug(level_surface, level_offset)
+
+        if self.won and not self.verdicting and not self.drama_pausing:
+            for signal in self.signals:
+                color = signal.color
+                position = utility.int_tuple(signal.position)
+                position = utility.add_tuples(position, level_offset)
+                pygame.draw.circle(level_surface, color, position, Signal.RADIUS)
+
+        player_entity.draw_debug(level_surface, play_screen.level, level_offset)
 
         if self.verdicting or self.drama_pausing or self.resulting:
             width = int(self.zoom * constants.SCREEN_WIDTH)
@@ -279,16 +308,21 @@ class PlayScreen:
         draw_view(surface, 50)
 
         y = 90
-        for signal in range(self.level.goal_count):
+        for index in range(self.level.goal_count):
             x = constants.SCREEN_MIDDLE_INT[0] - self.signals_width // 2
-            x += signal * self.SIGNAL_SPACING + Signal.RADIUS
+            x += index * self.SIGNAL_SPACING + Signal.RADIUS
 
-            if signal < self.placed_signals:
+            if index < self.placed_signals:
                 width = 0
             else:
                 width = 1
 
-            pygame.draw.circle(surface, BLACK, (x, y), Signal.RADIUS, width)
+            if self.won and not self.verdicting and not self.drama_pausing:
+                color = self.signals[index].color
+            else:
+                color = BLACK
+
+            pygame.draw.circle(surface, color, (x, y), Signal.RADIUS, width)
 
         if self.pause_alpha != 0:
             surface.blit(self.pause_overlay, (0, 0))
@@ -439,10 +473,16 @@ while True:
     events.update()
     sound.update()
 
+    if not play_screen.paused:
+        ripples.update()
+
     play_screen.update()
     if play_screen.quit_game:
         break
     play_screen.draw(final_display)
+
+    ripples.draw(final_display)
+
     debug.debug(clock.get_fps())
     debug.debug(play_screen.mouse_option)
     debug.draw(final_display)

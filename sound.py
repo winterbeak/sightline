@@ -22,7 +22,7 @@ class VolumeControl:
     def __init__(self):
         self.volume = 1.0
         self.target_volume = 1.0
-        self.fade_speed = 0.025
+        self.fade_speed = 0.001
 
     def set_volume(self, volume):
         self.volume = volume

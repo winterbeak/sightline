@@ -1,6 +1,7 @@
 import pygame
 import constants
 
+
 def int_tuple(tuple_):
     return int(tuple_[0]), int(tuple_[1])
 
