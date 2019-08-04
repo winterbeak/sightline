@@ -1,7 +1,7 @@
 import sound
 
 import pygame
-import sys
+# import sys
 import os
 import math
 
@@ -18,7 +18,8 @@ import debug
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 pygame.init()
-pygame.display.set_caption("GMTK 2019")
+pygame.display.set_caption("Sightline")
+pygame.display.set_icon(pygame.image.load("icon.png"))
 
 final_display = pygame.display.set_mode(constants.SCREEN_SIZE)
 final_display.convert_alpha()
@@ -51,7 +52,12 @@ PALE_YELLOW = constants.PALE_YELLOW
 PALE_ORANGE = constants.PALE_ORANGE
 
 win_sound = sound.load("win")
+win_sound.set_volume(0.8)
 lose_sound = sound.load("lose")
+lose_sound.set_volume(0.8)
+pause_sound = sound.load("pause")
+pause_sound.set_volume(0.75)
+circle_sounds = tuple(sound.load("circle%i" % i) for i in range(1, 9))
 
 level_offset = (0, 50)
 
@@ -152,9 +158,9 @@ class PlayScreen:
                       TutorialText("Pay attention to how your sightline changes!", 455)),
 
                      (TutorialText("Use WASD to move.", 110),
-                      TutorialText("Don't rely on the map!", 270),
-                      TutorialText("Instead, look at your sightline and", 290),
-                      TutorialText("treat movement like an FPS.", 310)),
+                      TutorialText("Don't rely on the map!", 285),
+                      TutorialText("Instead, look at your sightline and", 305),
+                      TutorialText("treat movement like an FPS.", 325)),
 
                      (TutorialText("These colored regions are the goals.", 110),
                       TutorialText("To win, you must place exactly one circle in each goal.", 455),
@@ -166,7 +172,7 @@ class PlayScreen:
 
                      (TutorialText("Beat the level again, but this time", 100),
                       TutorialText("using only your sightline to get around!", 120),
-                      TutorialText("If you need help, check out the pause menu by pressing Escape.", 455)),
+                      TutorialText("If you need help, check out the pause menu by pressing Escape.", 465)),
 
                      (TutorialText("Well done!", 110),
                       TutorialText("Once you're ready, click to move on to the next level.", 465)))
@@ -174,11 +180,11 @@ class PlayScreen:
     CONTINUE_TEXT = TutorialText("Click to continue.", 475)
     COMFORTABLE_TEXT = TutorialText("Once you're comfortable, click to continue.", 475)
 
-    CREDITS_TEXT = (TutorialText("Thanks for playing!", 40),
-                    TutorialText("Programming and visuals by winterbeak.", 80),
-                    TutorialText("winterbeak.itch.io", 100),
-                    TutorialText("Audio by saiziju.", 140),
-                    TutorialText("saiziju.itch.io", 160))
+    CREDITS_TEXT = (TutorialText("Thanks for playing!", 160),
+                    TutorialText("Programming and visuals by winterbeak.", 200),
+                    TutorialText("winterbeak.itch.io", 220),
+                    TutorialText("Audio by saiziju.", 280),
+                    TutorialText("saiziju.itch.io", 300))
 
     def __init__(self):
         self.mouse_lock = 0  # fixes sudden movement after exiting from pause
@@ -628,6 +634,8 @@ class PlayScreen:
         pygame.event.set_grab(False)
         pygame.mouse.set_visible(True)
 
+        # sound.play(pause_sound)
+
     def unpause(self):
         self.paused = False
         pygame.event.set_grab(True)
@@ -663,10 +671,11 @@ class PlayScreen:
 
             player_entity.go_to(self.level.start_position)
             # slightly offset, "gaps" seem to appear at exact 90 degree angles
-            player_entity.angle = self.level.start_orientation + 0.0001
+            player_entity.angle = self.level.start_orientation + 0.000001
 
     def place_signal(self, position):
         if self.placed_signals < self.level.goal_count:
+            sound.play(circle_sounds[self.placed_signals])
             self.signals.append(Signal(position, self.level))
             self.placed_signals += 1
 
@@ -744,27 +753,6 @@ L1_goals = (L1G0, L1G1, L1G2)
 L1 = levels.Level(L1_collisions, L1_goals, (250, 350), math.pi / 2)
 L1.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_ORANGE))
 
-# Level template
-# L#C0 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#C0.set_colors((color1, color2, color3))
-# L#C1 = geometry.Polygon(((x, y), (x, y), (x, y),
-#                          (x, y), (x, y))
-# L#C1.set_colors((color1, color2, color3, color4, color5))
-# L#C2 = geometry.Polygon(((x, y), (x, y)))
-# L#C2.set_colors((color1))
-#
-# L#_collisions = (L#C0, L#C1, L#C2)
-#
-# L#G0 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#G1 = geometry.Polygon(((x, y), (x, y), (x, y),
-#                          (x, y), (x, y)))
-# L#G2 = geometry.Polygon(((x, y), (x, y), (x, y), (x, y))
-#
-# L#_goals = (L#G0, L#G1, L#G2)
-#
-# L# = levels.Level(L#_collisions, L#_goals, (start_x, start_y), orientation)
-# L#.set_goal_colors((color1, color2, color3))
-
 
 # Level 2: Outside of a triangle
 L2C0 = geometry.Polygon(((250, 150), (175, 280), (325, 280)))
@@ -778,7 +766,7 @@ L2G2 = geometry.Polygon(((325, 280), (175, 280), (175, 430), (325, 430)))
 
 L2_goals = (L2G0, L2G1, L2G2)
 
-L2 = levels.Level(L2_collisions, L2_goals, (457, 100), math.pi / 3 * 4)
+L2 = levels.Level(L2_collisions, L2_goals, (457, 100), math.pi / 4 * 3)
 L2.set_goal_colors((PALE_MAGENTA, PALE_RED, PALE_YELLOW))
 
 
@@ -799,7 +787,7 @@ L3G1 = geometry.Polygon(((225, 350), (275, 350), (275, 400), (225, 400)))  # Bot
 
 L3_goals = (L3G0, L3G1)
 
-L3 = levels.Level(L3_collisions, L3_goals, (105, 127), math.pi / 10 * 3)
+L3 = levels.Level(L3_collisions, L3_goals, (250, 312), -math.pi / 2)
 L3.set_goal_colors((PALE_MAGENTA, PALE_CYAN))
 
 
@@ -817,6 +805,84 @@ L4_goals = (L4G0, L4G1)
 L4 = levels.Level(L4_collisions, L4_goals, (120, 350), -math.pi / 2)
 L4.set_goal_colors((PALE_BLUE, PALE_YELLOW))
 
+
+# Level 5: Box in a box
+L5C0 = geometry.Polygon(((100, 100), (400, 100), (400, 400), (100, 400)))
+L5C0.set_colors((CYAN, CYAN, RED, RED))
+L5C1 = geometry.Polygon(((225, 225), (275, 225), (275, 275), (225, 275)))
+L5C1.set_colors((RED, CYAN, CYAN, RED))
+
+L5_collisions = (L5C0, L5C1)
+
+L5G0 = geometry.Polygon(((100, 100), (400, 100), (275, 225), (225, 225)))
+L5G1 = geometry.Polygon(((400, 400), (100, 400), (225, 275), (275, 275)))
+
+L5_goals = (L5G0, L5G1)
+
+L5 = levels.Level(L5_collisions, L5_goals, (300, 300), math.pi / 5)
+L5.set_goal_colors((PALE_CYAN, PALE_RED))
+
+
+# Level 6: Five lines
+L6C0 = geometry.Polygon(((131, 132), (180, 96)), False)  # Top left
+L6C0.set_colors((ORANGE, ))
+L6C1 = geometry.Polygon(((314, 96), (363, 132)), False)  # Top right
+L6C1.set_colors((ORANGE, ))
+L6C2 = geometry.Polygon(((404, 260), (385, 316)), False)  # Bottom right
+L6C2.set_colors((ORANGE, ))
+L6C3 = geometry.Polygon(((277, 394), (217, 394)), False)  # Bottom
+L6C3.set_colors((ORANGE, ))
+L6C4 = geometry.Polygon(((109, 315), (90, 259)), False)  # Bottom left
+L6C4.set_colors((ORANGE, ))
+
+
+L6_collisions = (L6C0, L6C1, L6C2, L6C3, L6C4)
+
+L6G0 = geometry.Polygon(((247, 211), (275, 230), (265, 262),
+                         (228, 262), (219, 230)))
+
+L6_goals = (L6G0, )
+
+L6 = levels.Level(L6_collisions, L6_goals, (39, 404), -math.pi / 3)
+L6.set_goal_colors((PALE_ORANGE, ))
+
+
+# Level 7: Two buckets
+L7C0 = geometry.Polygon(((100, 100), (100, 400), (400, 400), (400, 100)), False)  # outside
+L7C0.set_colors((RED, GREEN, BLUE))
+L7C1 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)), False)
+L7C1.set_colors((RED, GREEN, BLUE))
+
+L7_collisions = (L7C0, L7C1)
+
+L7G0 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)))  # Center
+L7G1 = geometry.Polygon(((100, 100), (200, 100), (200, 200), (100, 200)))  # Top left
+L7G2 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
+L7G3 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
+L7G4 = geometry.Polygon(((300, 300), (300, 400), (400, 400), (400, 300)))  # Bottom right
+L7_goals = (L7G0, L7G1, L7G2, L7G3, L7G4)
+
+L7 = levels.Level(L7_collisions, L7_goals, (357, 137), math.pi / 3 * 2)
+L7.set_goal_colors((PALE_GREEN, PALE_RED, PALE_BLUE, PALE_CYAN, PALE_MAGENTA))
+
+
+# Level 8: Two lines
+L8C0 = geometry.Polygon(((200, 200), (400, 200)), False)  # top
+L8C0.set_colors((CYAN, ))
+L8C1 = geometry.Polygon(((100, 300), (300, 300)), False)  # bottom
+L8C1.set_colors((YELLOW, ))
+
+L8_collisions = (L8C0, L8C1)
+
+L8G0 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)))  # Center
+L8G1 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
+L8G2 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
+L8_goals = (L8G0, L8G1, L8G2)
+
+L8 = levels.Level(L8_collisions, L8_goals, (65, 357), -math.pi / 3 * 2)
+L8.set_goal_colors((PALE_ORANGE, PALE_CYAN, PALE_YELLOW))
+
+
 # level_test_shape1_points = ((100, 100), (400, 200), (350, 400), (100, 200))
 # level_test_polygon1 = geometry.Polygon(level_test_shape1_points, False)
 # level_test_polygon1.set_colors((constants.GREEN, constants.ORANGE,
@@ -833,7 +899,8 @@ L4.set_goal_colors((PALE_BLUE, PALE_YELLOW))
 # level_test = levels.Level((level_test_polygon1, level_test_polygon2,
 #                            level_test_polygon3))
 
-levels = (L0, L1, L2, L3, L4)
+# Note: the levels are actually out of order
+levels = (L3, L1, L2, L0, L4, L6, L8, L7, L5)
 last_level = len(levels) - 1
 
 play_screen.load_level(0)
@@ -844,6 +911,7 @@ sound.play_music()
 
 pygame.event.set_grab(True)
 pygame.mouse.set_visible(False)
+play_screen.mouse_lock = 5
 
 while True:
     events.update()
@@ -859,8 +927,8 @@ while True:
 
     ripples.draw(final_display)
 
-    debug.debug(clock.get_fps())
-    debug.debug(play_screen.mouse_option)
-    debug.draw(final_display)
+    # debug.debug(clock.get_fps())
+    # debug.debug(play_screen.mouse_option)
+    # debug.draw(final_display)
 
     screen_update(60)

@@ -8,7 +8,7 @@ pygame.init()
 
 channels = [pygame.mixer.Channel(channel) for channel in range(CHANNEL_COUNT)]
 
-MUSIC_MAX_VOLUME = 1.0
+MUSIC_MAX_VOLUME = 0.7
 
 
 def update():
