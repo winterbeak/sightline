@@ -174,6 +174,12 @@ class PlayScreen:
     CONTINUE_TEXT = TutorialText("Click to continue.", 475)
     COMFORTABLE_TEXT = TutorialText("Once you're comfortable, click to continue.", 475)
 
+    CREDITS_TEXT = (TutorialText("Thanks for playing!", 40),
+                    TutorialText("Programming and visuals by winterbeak.", 80),
+                    TutorialText("winterbeak.itch.io", 100),
+                    TutorialText("Audio by saiziju.", 140),
+                    TutorialText("saiziju.itch.io", 160))
+
     def __init__(self):
         self.mouse_lock = 0  # fixes sudden movement after exiting from pause
 
@@ -421,7 +427,7 @@ class PlayScreen:
                         self.load_level(self.level_num - 1)
 
                 elif self.mouse_option == self.NEXT_LEVEL:
-                    if self.level_num < last_level:
+                    if self.level_num <= last_level:
                         self.load_level(self.level_num + 1)
 
             if events.mouse.held:
@@ -450,67 +456,68 @@ class PlayScreen:
                     sound.volume_control.fade_to(value)
 
     def draw(self, surface):
-        if self.verdicting or self.drama_pausing or self.resulting:
-            level_surface = self.zoom_temp
-            self.zoom_temp.fill(constants.WHITE)
+        if self.level_num <= last_level:
+            if self.verdicting or self.drama_pausing or self.resulting:
+                level_surface = self.zoom_temp
+                self.zoom_temp.fill(constants.WHITE)
 
-        else:
-            level_surface = surface
-
-        if self.tutorial_stage == 3 and not self.changing_tutorial_stage:
-            self.level.draw_debug_goals(level_surface, level_offset, self.text_alpha)
-        elif self.tutorial_stage == 3 and self.changing_tutorial_stage:
-            self.level.draw_debug_goals(level_surface, level_offset)
-        elif self.tutorial_stage > 3:
-            self.level.draw_debug_goals(level_surface, level_offset)
-
-        self.level.draw_debug_outline(level_surface, level_offset)
-
-        if self.show_circles and self.previous_signals:
-            for signal in self.previous_signals:
-                color = signal.color
-                position = utility.int_tuple(signal.position)
-                position = utility.add_tuples(position, level_offset)
-                pygame.draw.circle(level_surface, color, position, Signal.RADIUS)
-
-        tutorial_show = self.tutorial_stage == 3 or self.tutorial_stage == 4
-        win_show = self.won and not self.verdicting and not self.drama_pausing
-        if tutorial_show or win_show:
-            for signal in self.signals:
-                color = signal.color
-                position = utility.int_tuple(signal.position)
-                position = utility.add_tuples(position, level_offset)
-                pygame.draw.circle(level_surface, color, position, Signal.RADIUS)
-
-        if self.show_player:
-            player_entity.draw_debug(level_surface, play_screen.level, level_offset)
-
-        if self.verdicting or self.drama_pausing or self.resulting:
-            width = int(self.zoom * constants.SCREEN_WIDTH)
-            height = int(self.zoom * constants.SCREEN_HEIGHT)
-            zoom_surface = pygame.transform.scale(self.zoom_temp, (width, height))
-            x = -(width - constants.SCREEN_WIDTH) // 2
-            y = -(height - constants.SCREEN_HEIGHT) // 2
-            surface.blit(zoom_surface, (x, y))
-
-        draw_view(surface, 50)
-
-        y = 90
-        for index in range(self.level.goal_count):
-            x = constants.SCREEN_MIDDLE_INT[0] - self.signals_width // 2
-            x += index * self.SIGNAL_SPACING + Signal.RADIUS
-
-            if index < self.placed_signals:
-                width = 0
             else:
-                width = 1
+                level_surface = surface
 
-            if self.won and not self.verdicting and not self.drama_pausing:
-                color = self.signals[index].color
-            else:
-                color = BLACK
+            if self.tutorial_stage == 3 and not self.changing_tutorial_stage:
+                self.level.draw_debug_goals(level_surface, level_offset, self.text_alpha)
+            elif self.tutorial_stage == 3 and self.changing_tutorial_stage:
+                self.level.draw_debug_goals(level_surface, level_offset)
+            elif self.tutorial_stage > 3:
+                self.level.draw_debug_goals(level_surface, level_offset)
 
-            pygame.draw.circle(surface, color, (x, y), Signal.RADIUS, width)
+            self.level.draw_debug_outline(level_surface, level_offset)
+
+            if self.show_circles and self.previous_signals:
+                for signal in self.previous_signals:
+                    color = signal.color
+                    position = utility.int_tuple(signal.position)
+                    position = utility.add_tuples(position, level_offset)
+                    pygame.draw.circle(level_surface, color, position, Signal.RADIUS)
+
+            tutorial_show = self.tutorial_stage == 3 or self.tutorial_stage == 4
+            win_show = self.won and not self.verdicting and not self.drama_pausing
+            if tutorial_show or win_show:
+                for signal in self.signals:
+                    color = signal.color
+                    position = utility.int_tuple(signal.position)
+                    position = utility.add_tuples(position, level_offset)
+                    pygame.draw.circle(level_surface, color, position, Signal.RADIUS)
+
+            if self.show_player:
+                player_entity.draw_debug(level_surface, play_screen.level, level_offset)
+
+            if self.verdicting or self.drama_pausing or self.resulting:
+                width = int(self.zoom * constants.SCREEN_WIDTH)
+                height = int(self.zoom * constants.SCREEN_HEIGHT)
+                zoom_surface = pygame.transform.scale(self.zoom_temp, (width, height))
+                x = -(width - constants.SCREEN_WIDTH) // 2
+                y = -(height - constants.SCREEN_HEIGHT) // 2
+                surface.blit(zoom_surface, (x, y))
+
+            draw_view(surface, 50)
+
+            y = 90
+            for index in range(self.level.goal_count):
+                x = constants.SCREEN_MIDDLE_INT[0] - self.signals_width // 2
+                x += index * self.SIGNAL_SPACING + Signal.RADIUS
+
+                if index < self.placed_signals:
+                    width = 0
+                else:
+                    width = 1
+
+                if self.won and not self.verdicting and not self.drama_pausing:
+                    color = self.signals[index].color
+                else:
+                    color = BLACK
+
+                pygame.draw.circle(surface, color, (x, y), Signal.RADIUS, width)
 
         if self.level_num == 0:
             for text in self.TUTORIAL_TEXT[self.tutorial_stage]:
@@ -519,6 +526,10 @@ class PlayScreen:
                 self.CONTINUE_TEXT.draw(surface, int(self.continue_text_alpha))
             elif self.tutorial_stage == 1 or self.tutorial_stage == 2:
                 self.COMFORTABLE_TEXT.draw(surface, int(self.continue_text_alpha))
+
+        elif self.level_num > last_level:
+            for text in self.CREDITS_TEXT:
+                text.draw(surface)
 
         if self.alpha < 255:
             self.fade_temp.set_alpha(255 - int(self.alpha))
@@ -629,6 +640,7 @@ class PlayScreen:
 
     def load_level(self, level_num):
         self.next_level_transitioning = False
+        self.won = False
 
         if level_num == 0:
             self.tutorial_stage = 0
@@ -643,16 +655,15 @@ class PlayScreen:
             self.show_circles = False
 
         self.level_num = level_num
-        self.level = levels[level_num]
+        if level_num <= last_level:
+            self.level = levels[level_num]
 
-        self.won = False
+            self.clear_signals()
+            self.signals_width = self.SIGNAL_SPACING * self.level.goal_count - self.SIGNAL_GAP
 
-        self.clear_signals()
-        self.signals_width = self.SIGNAL_SPACING * self.level.goal_count - self.SIGNAL_GAP
-
-        player_entity.go_to(self.level.start_position)
-        # slightly offset, "gaps" seem to appear at exact 90 degree angles
-        player_entity.angle = self.level.start_orientation + 0.0001
+            player_entity.go_to(self.level.start_position)
+            # slightly offset, "gaps" seem to appear at exact 90 degree angles
+            player_entity.angle = self.level.start_orientation + 0.0001
 
     def place_signal(self, position):
         if self.placed_signals < self.level.goal_count:
@@ -734,7 +745,7 @@ L1 = levels.Level(L1_collisions, L1_goals, (250, 350), math.pi / 2)
 L1.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_ORANGE))
 
 # Level template
-# L#C0 = geometry.Polygon(((x, y), (x, y), (x, y))))
+# L#C0 = geometry.Polygon(((x, y), (x, y), (x, y)))
 # L#C0.set_colors((color1, color2, color3))
 # L#C1 = geometry.Polygon(((x, y), (x, y), (x, y),
 #                          (x, y), (x, y))
@@ -751,11 +762,60 @@ L1.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_ORANGE))
 #
 # L#_goals = (L#G0, L#G1, L#G2)
 #
-# L# = levels.Level(L#_collisions, L#_goals, (start_x, start_y)
+# L# = levels.Level(L#_collisions, L#_goals, (start_x, start_y), orientation)
 # L#.set_goal_colors((color1, color2, color3))
 
-levels = (L0, L1)
-last_level = len(levels) - 1
+
+# Level 2: Outside of a triangle
+L2C0 = geometry.Polygon(((250, 150), (175, 280), (325, 280)))
+L2C0.set_colors((MAGENTA, YELLOW, RED))
+
+L2_collisions = (L2C0, )
+
+L2G0 = geometry.Polygon(((250, 150), (175, 280), (48, 205), (122, 77)))
+L2G1 = geometry.Polygon(((250, 150), (325, 280), (452, 205), (378, 77)))
+L2G2 = geometry.Polygon(((325, 280), (175, 280), (175, 430), (325, 430)))
+
+L2_goals = (L2G0, L2G1, L2G2)
+
+L2 = levels.Level(L2_collisions, L2_goals, (457, 100), math.pi / 3 * 4)
+L2.set_goal_colors((PALE_MAGENTA, PALE_RED, PALE_YELLOW))
+
+
+# Level 3: Three boxes
+L3C0 = geometry.Polygon(((50, 50), (50, 400), (450, 400)), False)  # Right angle
+L3C0.set_colors((YELLOW, YELLOW))
+L3C1 = geometry.Polygon(((140, 175), (190, 175), (190, 225), (140, 225)))  # Left box
+L3C1.set_colors((CYAN, MAGENTA, CYAN, MAGENTA))
+L3C2 = geometry.Polygon(((225, 175), (275, 175), (275, 225), (225, 225)))  # Middle box
+L3C2.set_colors((CYAN, MAGENTA, CYAN, MAGENTA))
+L3C3 = geometry.Polygon(((310, 175), (360, 175), (360, 225), (310, 225)))  # Right box
+L3C3.set_colors((CYAN, MAGENTA, CYAN, MAGENTA))
+
+L3_collisions = (L3C0, L3C1, L3C2, L3C3)
+
+L3G0 = geometry.Polygon(((50, 175), (100, 175), (100, 225), (50, 225)))  # Left goal
+L3G1 = geometry.Polygon(((225, 350), (275, 350), (275, 400), (225, 400)))  # Bottom goal
+
+L3_goals = (L3G0, L3G1)
+
+L3 = levels.Level(L3_collisions, L3_goals, (105, 127), math.pi / 10 * 3)
+L3.set_goal_colors((PALE_MAGENTA, PALE_CYAN))
+
+
+# Level 4: Single line
+L4C0 = geometry.Polygon(((200, 200), (300, 200)), False)
+L4C0.set_colors((GREEN, ))
+
+L4_collisions = (L4C0, )
+
+L4G0 = geometry.Polygon(((200, 200), (300, 200), (300, 300), (200, 300)))  # Bottom goal
+L4G1 = geometry.Polygon(((200, 200), (300, 200), (300, 100), (200, 100)))  # Top goal
+
+L4_goals = (L4G0, L4G1)
+
+L4 = levels.Level(L4_collisions, L4_goals, (120, 350), -math.pi / 2)
+L4.set_goal_colors((PALE_BLUE, PALE_YELLOW))
 
 # level_test_shape1_points = ((100, 100), (400, 200), (350, 400), (100, 200))
 # level_test_polygon1 = geometry.Polygon(level_test_shape1_points, False)
@@ -772,6 +832,9 @@ last_level = len(levels) - 1
 #
 # level_test = levels.Level((level_test_polygon1, level_test_polygon2,
 #                            level_test_polygon3))
+
+levels = (L0, L1, L2, L3, L4)
+last_level = len(levels) - 1
 
 play_screen.load_level(0)
 play_screen.show_player = True

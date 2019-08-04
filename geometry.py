@@ -418,7 +418,9 @@ SCREEN_CORNERS = ((0, 0), (constants.SCREEN_WIDTH, 0),
 SCREEN_POLYGON = Polygon(SCREEN_CORNERS)
 
 
-def screen_edge(point, angle):
+def screen_edge(point, angle, offset=(0, 0)):
+    if offset != (0, 0):
+        point = utility.add_tuples(point, offset)
     return closest_wall_intersection(point, SCREEN_POLYGON, angle)
 
 

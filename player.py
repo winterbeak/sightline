@@ -114,12 +114,14 @@ class Player:
         point1 = self.position
         point2 = geometry.closest_wall_level_intersection(self.position, level, angle)
 
-        if offset != (0, 0):
-            point1 = utility.add_tuples(point1, offset)
-            point2 = utility.add_tuples(point2, offset)
-
         if point2:
+            if offset != (0, 0):
+                point1 = utility.add_tuples(point1, offset)
+                point2 = utility.add_tuples(point2, offset)
             pygame.draw.line(surface, constants.BLACK, point1, point2)
         else:
-            point2 = geometry.screen_edge(self.position, angle)
+            point2 = geometry.screen_edge(self.position, angle, offset)
+            if offset != (0, 0):
+                point1 = utility.add_tuples(point1, offset)
+
             pygame.draw.line(surface, constants.BLACK, point1, point2)
