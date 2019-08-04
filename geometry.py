@@ -1,9 +1,11 @@
 import pygame
 import math
+import os
 
 import constants
 import utility
 
+os.environ['SDL_VIDEO_CENTERED'] = '1'
 pygame.init()
 
 
@@ -282,12 +284,14 @@ class Polygon:
         for index, color in enumerate(colors_list):
             self.segments[index].color = color
 
-    def draw_debug(self, surface, offset=(0, 0)):
+    def draw_debug(self, surface, offset=(0, 0), color=None):
+        if not color:
+            color = self.color
         """Draws the polygon.  Does not come with an outline."""
         point_list = self.point_list
         if offset != (0, 0):
             point_list = tuple(utility.add_tuples(offset, point) for point in point_list)
-        pygame.draw.polygon(surface, self.color, point_list)
+        pygame.draw.polygon(surface, color, point_list)
 
 
 def points_to_segment_list(point_list, closed=True):

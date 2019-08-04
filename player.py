@@ -91,13 +91,13 @@ class Player:
 
     def go_to(self, position):
         self.position = position
-        self.x = position[0]
-        self.y = position[1]
+        self.x = float(position[0])
+        self.y = float(position[1])
 
     def move(self, difference):
         self.position = utility.add_tuples(self.position, difference)
-        self.x = self.position[0]
-        self.y = self.position[1]
+        self.x = float(self.position[0])
+        self.y = float(self.position[1])
 
     def draw_debug(self, surface, level, offset=(0, 0)):
         position = utility.int_tuple(self.position)

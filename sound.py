@@ -1,5 +1,4 @@
 import pygame
-import random
 import os
 
 CHANNEL_COUNT = 16
@@ -48,6 +47,7 @@ class VolumeControl:
 
 
 volume_control = VolumeControl()
+volume_control.fade_speed = 0.05
 music_volume = VolumeControl()
 
 
