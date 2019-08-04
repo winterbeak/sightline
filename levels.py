@@ -7,8 +7,9 @@ pygame.init()
 
 
 class Level:
-    def __init__(self, collision, goals, start_position):
+    def __init__(self, collision, goals, start_position, start_orientation):
         self.start_position = start_position
+        self.start_orientation = start_orientation
         self.collision = collision
         self.goals = goals
         self.goal_count = len(goals)

@@ -131,11 +131,19 @@ class PlayScreen:
     VOLUME_SLIDER = 1
     SENSITIVITY_SLIDER = 2
     EXIT = 3
+    SHOW_CIRCLES = 4
+    SHOW_PLAYER = 5
+    PREVIOUS_LEVEL = 6
+    NEXT_LEVEL = 7
 
-    HITBOXES = (pygame.Rect(200, 100, 100, 40),
-                pygame.Rect(230, 150, 150, 40),
-                pygame.Rect(230, 200, 150, 40),
-                pygame.Rect(200, 250, 100, 40))
+    HITBOXES = (pygame.Rect(200, 100, 100, 40),  # Resume
+                pygame.Rect(230, 150, 150, 40),  # Volume slider
+                pygame.Rect(230, 200, 150, 40),  # Sensitivity slider
+                pygame.Rect(200, 250, 100, 40),  # Exit
+                pygame.Rect(260, 360, 50, 30),  # Show circles
+                pygame.Rect(260, 395, 50, 30),  # Show player
+                pygame.Rect(150, 450, 30, 30),  # Previous level
+                pygame.Rect(320, 450, 30, 30))  # Next level
 
     TUTORIAL_TEXT = ((TutorialText("This is your sightline.", 20),
                       TutorialText("This is the map.", 455)),
@@ -171,6 +179,7 @@ class PlayScreen:
 
         self.level = None
 
+        self.previous_signals = []
         self.signals = []
         self.placed_signals = 0
         self.signals_width = 0
@@ -205,6 +214,7 @@ class PlayScreen:
         self.tutorial_frame = 0
 
         self.show_player = False
+        self.show_circles = False
 
         self.fade_temp = pygame.Surface(constants.SCREEN_SIZE)
         self.fade_temp.fill(WHITE)
@@ -324,7 +334,7 @@ class PlayScreen:
                         x = constants.SCREEN_MIDDLE_INT[0] - self.signals_width // 2
                         x += index * self.SIGNAL_SPACING + Signal.RADIUS
 
-                        if self.won:
+                        if self.won or self.show_circles:
                             color = signal.color
                             anchor = utility.add_tuples(level_offset, constants.SCREEN_MIDDLE)
                             position = utility.add_tuples(signal.position, level_offset)
@@ -344,6 +354,7 @@ class PlayScreen:
                         else:
                             self.next_level_transitioning = True
                     else:
+                        self.previous_signals = self.signals
                         self.clear_signals()
 
             elif self.resulting:
@@ -399,6 +410,20 @@ class PlayScreen:
                 elif self.mouse_option == self.EXIT:
                     self.quit_game = True
 
+                elif self.mouse_option == self.SHOW_PLAYER:
+                    self.show_player = not self.show_player
+
+                elif self.mouse_option == self.SHOW_CIRCLES:
+                    self.show_circles = not self.show_circles
+
+                elif self.mouse_option == self.PREVIOUS_LEVEL:
+                    if self.level_num > 0:
+                        self.load_level(self.level_num - 1)
+
+                elif self.mouse_option == self.NEXT_LEVEL:
+                    if self.level_num < last_level:
+                        self.load_level(self.level_num + 1)
+
             if events.mouse.held:
                 if self.mouse_option == self.SENSITIVITY_SLIDER:
                     rect = self.HITBOXES[self.SENSITIVITY_SLIDER]
@@ -440,6 +465,13 @@ class PlayScreen:
             self.level.draw_debug_goals(level_surface, level_offset)
 
         self.level.draw_debug_outline(level_surface, level_offset)
+
+        if self.show_circles and self.previous_signals:
+            for signal in self.previous_signals:
+                color = signal.color
+                position = utility.int_tuple(signal.position)
+                position = utility.add_tuples(position, level_offset)
+                pygame.draw.circle(level_surface, color, position, Signal.RADIUS)
 
         tutorial_show = self.tutorial_stage == 3 or self.tutorial_stage == 4
         win_show = self.won and not self.verdicting and not self.drama_pausing
@@ -539,6 +571,47 @@ class PlayScreen:
             text = utility.black_text_alpha(subtitle_font, "Stuck?", self.pause_alpha)
             utility.blit_vert_center(surface, text, 320)
 
+            text = utility.black_text_alpha(small_font, "Show circles on fail", self.pause_alpha)
+            x = constants.SCREEN_MIDDLE[0] - 150
+            y = self.HITBOXES[self.SHOW_CIRCLES].top + 5
+            surface.blit(text, (x, y))
+
+            if self.show_circles:
+                text = utility.black_text_alpha(small_font, "On", self.pause_alpha)
+                x = constants.SCREEN_MIDDLE[0] + 24
+                surface.blit(text, (x, y))
+            else:
+                text = utility.black_text_alpha(small_font, "Off", self.pause_alpha)
+                x = constants.SCREEN_MIDDLE[0] + 24
+                surface.blit(text, (x, y))
+
+            text = utility.black_text_alpha(small_font, "Show player", self.pause_alpha)
+            x = constants.SCREEN_MIDDLE[0] - 100
+            y = self.HITBOXES[self.SHOW_PLAYER].top + 5
+            surface.blit(text, (x, y))
+
+            if self.show_player:
+                text = utility.black_text_alpha(small_font, "On", self.pause_alpha)
+                x = constants.SCREEN_MIDDLE[0] + 24
+                surface.blit(text, (x, y))
+            else:
+                text = utility.black_text_alpha(small_font, "Off", self.pause_alpha)
+                x = constants.SCREEN_MIDDLE[0] + 24
+                surface.blit(text, (x, y))
+
+            text = utility.black_text_alpha(small_font, "Change level", self.pause_alpha)
+            utility.blit_vert_center(surface, text, 455)
+
+            text = utility.black_text_alpha(subtitle_font, "<", self.pause_alpha)
+            x = constants.SCREEN_MIDDLE[0] - 92
+            y = self.HITBOXES[self.PREVIOUS_LEVEL].top - 1
+            surface.blit(text, (x, y))
+
+            text = utility.black_text_alpha(subtitle_font, ">", self.pause_alpha)
+            x = constants.SCREEN_MIDDLE[0] + 79
+            y = self.HITBOXES[self.PREVIOUS_LEVEL].top - 1
+            surface.blit(text, (x, y))
+
     def pause(self):
         self.paused = True
         pygame.event.set_grab(False)
@@ -557,6 +630,18 @@ class PlayScreen:
     def load_level(self, level_num):
         self.next_level_transitioning = False
 
+        if level_num == 0:
+            self.tutorial_stage = 0
+            self.text_alpha = 0.0
+            self.continue_text_alpha = 0.0
+            self.changing_tutorial_stage = False
+            self.tutorial_frame = 0
+            self.show_player = True
+        else:
+            self.tutorial_stage = 6
+            self.show_player = False
+            self.show_circles = False
+
         self.level_num = level_num
         self.level = levels[level_num]
 
@@ -566,6 +651,8 @@ class PlayScreen:
         self.signals_width = self.SIGNAL_SPACING * self.level.goal_count - self.SIGNAL_GAP
 
         player_entity.go_to(self.level.start_position)
+        # slightly offset, "gaps" seem to appear at exact 90 degree angles
+        player_entity.angle = self.level.start_orientation + 0.0001
 
     def place_signal(self, position):
         if self.placed_signals < self.level.goal_count:
@@ -573,6 +660,12 @@ class PlayScreen:
             self.placed_signals += 1
 
         if self.placed_signals == self.level.goal_count:
+            if self.show_circles and self.previous_signals:
+                for signal in self.previous_signals:
+                    position = utility.add_tuples(signal.position, level_offset)
+                    ripples.create_ripple(position, signal.color, 30, 30)
+            self.previous_signals = []
+
             self.verdict_frame = 0
             self.drama_pause_frame = 0
             self.result_frame = 0
@@ -620,7 +713,7 @@ L0G3 = geometry.Polygon(((300, 300), (300, 400), (200, 400), (200, 300)))  # bot
 
 L0_goals = (L0G0, L0G1, L0G2, L0G3)
 
-L0 = levels.Level(L0_collisions, L0_goals, (250, 250))
+L0 = levels.Level(L0_collisions, L0_goals, (250, 250), -math.pi / 2)
 L0.set_goal_colors((PALE_BLUE, PALE_ORANGE, PALE_MAGENTA, PALE_RED))
 
 
@@ -637,7 +730,7 @@ L1G2 = geometry.Polygon(((100, 300), (400, 300), (400, 400), (100, 400)))  # bot
 
 L1_goals = (L1G0, L1G1, L1G2)
 
-L1 = levels.Level(L1_collisions, L1_goals, (250, 350))
+L1 = levels.Level(L1_collisions, L1_goals, (250, 350), math.pi / 2)
 L1.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_ORANGE))
 
 # Level template
@@ -662,6 +755,7 @@ L1.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_ORANGE))
 # L#.set_goal_colors((color1, color2, color3))
 
 levels = (L0, L1)
+last_level = len(levels) - 1
 
 # level_test_shape1_points = ((100, 100), (400, 200), (350, 400), (100, 200))
 # level_test_polygon1 = geometry.Polygon(level_test_shape1_points, False)
@@ -707,6 +801,3 @@ while True:
     debug.draw(final_display)
 
     screen_update(60)
-
-pygame.quit()
-sys.exit()
