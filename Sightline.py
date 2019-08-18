@@ -885,47 +885,118 @@ LEVEL_TWO_LINES.set_goal_colors((PALE_ORANGE, PALE_CYAN, PALE_YELLOW))
 
 
 # Level 9: Barrier
-# L#C0 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#C0.set_colors((color1, color2, color3))
-# L#C1 = geometry.Polygon(((x, y), (x, y), (x, y),
-#                          (x, y), (x, y))
-# L#C1.set_colors((color1, color2, color3, color4, color5))
-# L#C2 = geometry.Polygon(((x, y), (x, y)))
-# L#C2.set_colors((color1))
-#
-# L#_collisions = (L#C0, L#C1, L#C2)
-#
-# L#G0 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#G1 = geometry.Polygon(((x, y), (x, y), (x, y),
-#                          (x, y), (x, y)))
-# L#G2 = geometry.Polygon(((x, y), (x, y), (x, y), (x, y))
-#
-# L#_goals = (L#G0, L#G1, L#G2)
-#
-# L# = levels.Level(L#_collisions, L#_goals, (start_x, start_y), orientation)
-# L#.set_goal_colors((color1, color2, color3))
+L9C0 = geometry.Polygon(((113, 260), (200, 240), (300, 240), (387, 260)), False)
+L9C0.set_colors((MAGENTA, CYAN, MAGENTA))
+
+L9_collisions = (L9C0, )
+
+L9G0 = geometry.Polygon(((200, 240), (300, 240), (300, 340), (200, 340)))  # Bottom
+L9G1 = geometry.Polygon(((113, 260), (200, 240), (180, 153), (93, 173)))  # Top left
+L9G2 = geometry.Polygon(((387, 260), (300, 240), (320, 153), (407, 173)))  # Top right
+
+L9_goals = (L9G0, L9G1, L9G2)
+
+LEVEL_WINGS = levels.Level(L9_collisions, L9_goals, (50, 250), 0.0)
+LEVEL_WINGS.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_YELLOW))
 
 
-# Level template
-# L#C0 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#C0.set_colors((color1, color2, color3))
-# L#C1 = geometry.Polygon(((x, y), (x, y), (x, y),
-#                          (x, y), (x, y))
-# L#C1.set_colors((color1, color2, color3, color4, color5))
-# L#C2 = geometry.Polygon(((x, y), (x, y)))
-# L#C2.set_colors((color1))
-#
-# L#_collisions = (L#C0, L#C1, L#C2)
-#
-# L#G0 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#G1 = geometry.Polygon(((x, y), (x, y), (x, y),
-#                          (x, y), (x, y)))
-# L#G2 = geometry.Polygon(((x, y), (x, y), (x, y), (x, y))
-#
-# L#_goals = (L#G0, L#G1, L#G2)
-#
-# L# = levels.Level(L#_collisions, L#_goals, (start_x, start_y), orientation)
-# L#.set_goal_colors((color1, color2, color3))
+# Level 10: Hexagon
+L10C0 = geometry.Polygon(((250, 108), (374, 179), (374, 321),
+                          (250, 392), (127, 321), (127, 179)))  # Hexagon
+L10C0.set_colors((RED, MAGENTA, RED, RED, MAGENTA, RED))
+L10C1 = geometry.Polygon(((250, 250), (250, 199)), False)  # Up
+L10C1.set_colors((ORANGE, ))
+L10C2 = geometry.Polygon(((250, 250), (205, 276)), False)  # Bottom left
+L10C2.set_colors((ORANGE, ))
+L10C3 = geometry.Polygon(((250, 250), (295, 276)), False)  # Bottom right
+L10C3.set_colors((ORANGE, ))
+
+L10_collisions = (L10C0, L10C1, L10C2, L10C3)
+
+L10G0 = geometry.Polygon(((250, 250), (250, 199), (205, 225), (205, 276)))  # Top left
+L10G1 = geometry.Polygon(((250, 250), (250, 199), (295, 225), (295, 276)))  # Top right
+
+L10_goals = (L10G0, L10G1)
+
+LEVEL_HEXAGON = levels.Level(L10_collisions, L10_goals, (240, 275), math.pi)
+LEVEL_HEXAGON.set_goal_colors((PALE_ORANGE, PALE_MAGENTA))
+
+
+# Level 11: Elbow
+L11C0 = geometry.Polygon(((200, 200), (300, 200), (200, 300)), False)
+L11C0.set_colors((CYAN, CYAN))
+
+L11_collisions = (L11C0, )
+
+L11G0 = geometry.Polygon(((200, 200), (300, 200), (200, 300)))  # Inside
+L11G1 = geometry.Polygon(((200, 200), (250, 200), (250, 150), (200, 150)))  # Top
+
+L11_goals = (L11G0, L11G1)
+
+LEVEL_ELBOW = levels.Level(L11_collisions, L11_goals, (400, 50), math.pi / 4 * 3)
+LEVEL_ELBOW.set_goal_colors((PALE_CYAN, PALE_ORANGE))
+
+
+# Level 12: Grid
+def generate_level_12():
+    margin = 50
+    spacing = 400 / 11
+    collision = []
+
+    # horizontal lines
+    for row in range(4):
+        for column in range(3):
+            x1 = int(spacing * column * 3 + spacing * 2) + margin
+            x2 = x1 + int(spacing)
+            y = int(spacing * row * 3 + spacing) + margin
+            collision.append(geometry.Polygon(((x1, y), (x2, y)), False))
+
+    # vertical lines
+    for column in range(4):
+        for row in range(3):
+            x = int(spacing * column * 3 + spacing) + margin
+            y1 = int(spacing * row * 3 + spacing * 2) + margin
+            y2 = y1 + int(spacing)
+            collision.append(geometry.Polygon(((x, y1), (x, y2)), False))
+
+    for polygon in collision:
+        polygon.set_colors((RED, ))
+
+    collision.pop(1)  # removal of middle-top line
+
+    # goal 1
+    x1 = int(spacing * 4 + margin)
+    y1 = int(spacing + margin)
+    x2 = x1 + int(spacing * 3)
+    y2 = y1 + int(spacing * 3)
+
+    goal_1 = geometry.Polygon(((x1, y1), (x2, y1), (x2, y2), (x1, y2)))
+
+    # goal 2
+    x1 = int(spacing + margin)
+    y1 = int(spacing * 4 + margin)
+    x2 = x1 + int(spacing * 3)
+    y2 = y1 + int(spacing * 3)
+
+    goal_2 = geometry.Polygon(((x1, y1), (x2, y1), (x2, y2), (x1, y2)))
+
+    # goal 3
+    x1 = int(spacing * 7 + margin)
+    y1 = int(spacing * 7 + margin)
+    x2 = x1 + int(spacing * 3)
+    y2 = y1 + int(spacing * 3)
+
+    goal_3 = geometry.Polygon(((x1, y1), (x2, y1), (x2, y2), (x1, y2)))
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = levels.Level(collision, goals, (250, 250), math.pi)
+    level.set_goal_colors((PALE_RED, PALE_CYAN, PALE_ORANGE))
+
+    return level
+
+
+LEVEL_GRID = generate_level_12()
 
 
 # level_test_shape1_points = ((100, 100), (400, 200), (350, 400), (100, 200))
@@ -945,9 +1016,20 @@ LEVEL_TWO_LINES.set_goal_colors((PALE_ORANGE, PALE_CYAN, PALE_YELLOW))
 #                            level_test_polygon3))
 
 # Note: the levels are actually out of order
-levels = (LEVEL_THREE_BOXES, LEVEL_TWO_SPIKES, LEVEL_TRIANGLE,
-          LEVEL_PLUS, LEVEL_SINGLE_LINE, LEVEL_PENTAGON,
-          LEVEL_TWO_LINES, LEVEL_BUCKETS, LEVEL_BOXCEPTION)
+levels = (LEVEL_THREE_BOXES,
+          LEVEL_TWO_SPIKES,
+          LEVEL_TRIANGLE,
+          LEVEL_PLUS,
+          LEVEL_SINGLE_LINE,
+          LEVEL_PENTAGON,
+          LEVEL_WINGS,
+          LEVEL_TWO_LINES,
+          LEVEL_BUCKETS,
+          LEVEL_BOXCEPTION,
+          LEVEL_HEXAGON,
+          LEVEL_ELBOW,
+          LEVEL_GRID
+          )
 last_level = len(levels) - 1
 
 play_screen.load_level(0)
