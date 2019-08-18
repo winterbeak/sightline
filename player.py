@@ -13,6 +13,8 @@ sensitivity = 0.002
 
 
 class Player:
+    MOVEMENT_SPEED = 1.3
+
     def __init__(self):
         self.x = 0.0
         self.y = 0.0
@@ -23,15 +25,15 @@ class Player:
         self.angle += (float(events.mouse.relative[0]) * sensitivity)
         self.angle = geometry.mod_angle(self.angle)
 
-        key_a = pygame.K_a in events.keys.queue
-        key_w = pygame.K_w in events.keys.queue
-        key_d = pygame.K_d in events.keys.queue
-        key_s = pygame.K_s in events.keys.queue
+        key_a_pressed = pygame.K_a in events.keys.queue
+        key_w_pressed = pygame.K_w in events.keys.queue
+        key_d_pressed = pygame.K_d in events.keys.queue
+        key_s_pressed = pygame.K_s in events.keys.queue
 
-        key_a = key_a and not key_d
-        key_d = key_d and not key_a
-        key_w = key_w and not key_s
-        key_s = key_s and not key_w
+        key_a = key_a_pressed and not key_d_pressed
+        key_d = key_d_pressed and not key_a_pressed
+        key_w = key_w_pressed and not key_s_pressed
+        key_s = key_s_pressed and not key_w_pressed
 
         angle = self.angle
 
@@ -56,7 +58,7 @@ class Player:
             return
 
         angle = geometry.mod_angle(angle)
-        difference = geometry.vector_to_difference(angle, 1.2)
+        difference = geometry.vector_to_difference(angle, self.MOVEMENT_SPEED)
 
         next_position = utility.add_tuples(difference, self.position)
 
@@ -68,22 +70,39 @@ class Player:
                 if geometry.segments_collide(segment, move_segment):
                     collide = True
 
+                    # note: to_wall is None when next_position is on
+                    # the wall.
                     to_wall = geometry.point_and_segment(next_position, segment)
                     if to_wall:
                         vector = geometry.points_to_vector(next_position, to_wall.point1)
                         difference = geometry.vector_to_difference(vector[0], vector[1] + 1.0)
                         position = utility.add_tuples(next_position, difference)
 
-                        move_segment_2 = geometry.Segment(self.position, position)
+                        # bug: sometimes you get stuck trying to slide off the
+                        # end of a line segment
+                        if not self.movement_collides_level(position, level):
+                            self.go_to(position)
 
-                        valid_move = True
+                    else:
+                        # the next position will either be 1.0 away on one
+                        # side of the wall, or the other.  the correct position
+                        # is chosen by looking at which position doesn't cross
+                        # the wall.
+                        perpendicular = geometry.inverse(segment.slope)
+                        angle = geometry.slope_to_angle(perpendicular)
 
-                        for polygon_2 in level.collision:
-                            for segment_2 in polygon_2.segments:
-                                if geometry.segments_collide(segment_2, move_segment_2):
-                                    valid_move = False
+                        difference_1 = geometry.vector_to_difference(angle, 1.0)
+                        difference_2 = geometry.vector_to_difference(angle - math.pi, 1.0)
+                        position_1 = utility.add_tuples(next_position, difference_1)
+                        position_2 = utility.add_tuples(next_position, difference_2)
 
-                        if valid_move:
+                        segment_1 = geometry.Segment(self.position, position_1)
+                        if geometry.segments_collide(segment, segment_1):
+                            position = position_2
+                        else:
+                            position = position_1
+
+                        if not self.movement_collides_level(position, level):
                             self.go_to(position)
 
         if not collide:
@@ -121,7 +140,16 @@ class Player:
             pygame.draw.line(surface, constants.BLACK, point1, point2)
         else:
             point2 = geometry.screen_edge(self.position, angle, offset)
-            if offset != (0, 0):
-                point1 = utility.add_tuples(point1, offset)
+            if point2:
+                if offset != (0, 0):
+                    point1 = utility.add_tuples(point1, offset)
 
-            pygame.draw.line(surface, constants.BLACK, point1, point2)
+                pygame.draw.line(surface, constants.BLACK, point1, point2)
+
+    def movement_collides_level(self, position, level):
+        move_segment = geometry.Segment(self.position, position)
+        for polygon in level.collision:
+            for segment in polygon.segments:
+                if geometry.segments_collide(segment, move_segment):
+                    return True
+        return False

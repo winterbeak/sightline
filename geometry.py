@@ -44,6 +44,10 @@ def angles_close(angle1, angle2):
 
 
 def closest_wall(position, polygon, angle):
+    """Returns the closest segment in polygon that collides with a ray.
+
+    The ray starts at position and has an angle of angle (in radians).
+    """
     line = Line(position, angle_to_slope(angle))
     shortest_distance = 10000000.0
     closest = None
@@ -62,6 +66,11 @@ def closest_wall(position, polygon, angle):
 
 
 def closest_wall_intersection(position, polygon, angle):
+    """Returns the point of intersection of the closest segment in the polygon
+    that collides with a ray.
+
+    The ray starts at position and has an angle of angle (in radians).
+    """
     line = Line(position, angle_to_slope(angle))
     shortest_distance = 10000000.0
     closest_intersection = None
@@ -80,6 +89,7 @@ def closest_wall_intersection(position, polygon, angle):
 
 
 def closest_wall_level(position, level, angle):
+    """Same as closest_wall, except using a level instead of a polygon."""
     line = Line(position, angle_to_slope(angle))
     shortest_distance = 10000000.0
     closest = None
@@ -99,6 +109,9 @@ def closest_wall_level(position, level, angle):
 
 
 def closest_wall_level_intersection(position, level, angle):
+    """Same as closest_wall_intersection, except using a level instead
+    of a polygon.
+    """
     line = Line(position, angle_to_slope(angle))
     shortest_distance = 10000000.0
     closest_intersection = None
@@ -176,6 +189,7 @@ def line_segment_intersection(line, segment):
 
 
 def poi(slope_1, y_intercept_1, slope_2, y_intercept_2):
+    """Returns the point of intersection, given the properties of two lines."""
     x = (y_intercept_2 - y_intercept_1) / (slope_1 - slope_2)
     y = slope_1 * x + y_intercept_1
     return x, y
@@ -418,10 +432,39 @@ SCREEN_CORNERS = ((0, 0), (constants.SCREEN_WIDTH, 0),
 SCREEN_POLYGON = Polygon(SCREEN_CORNERS)
 
 
+def farthest_wall_intersection(position, polygon, angle):
+    """Returns the point of intersection of the farthest segment in the polygon
+    that collides with a ray.
+
+    The ray starts at position and has an angle of angle (in radians).
+    """
+    line = Line(position, angle_to_slope(angle))
+    farthest_distance = 0.0
+    farthest_intersection = None
+
+    for segment in polygon.segments:
+        intersection = line_segment_intersection(line, segment)
+        if intersection:
+            distance_between = distance(position, intersection)
+            angle_check = angle_between(position, intersection)
+            if distance_between > farthest_distance:
+                if angles_close(angle, angle_check):
+                    farthest_distance = distance_between
+                    farthest_intersection = intersection
+
+    return farthest_intersection
+
+
 def screen_edge(point, angle, offset=(0, 0)):
+    """Given a ray, this finds the farthest screen edge that the ray
+    collides with.
+
+    Can return None if the ray does not collide with any edge.
+    """
     if offset != (0, 0):
         point = utility.add_tuples(point, offset)
-    return closest_wall_intersection(point, SCREEN_POLYGON, angle)
+
+    return farthest_wall_intersection(point, SCREEN_POLYGON, angle)
 
 
 def scale_position(position, anchor, scale):
