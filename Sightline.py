@@ -82,33 +82,14 @@ def new_ray(position, level, angle):
 
 
 def draw_view(surface, y):
-    # # Optimizes LEVEL_GRID by abusing the fact that it only has one color
-    # if play_screen.level is LEVEL_GRID:
-    #     for x in range(0, constants.SCREEN_WIDTH, 2):
-    #         angle = player_entity.angle - (FOV / 2) + (FOV / constants.SCREEN_WIDTH * x)
-    #         if geometry.level_wall_in_direction(player_entity.position, play_screen.level, angle):
-    #             surface.fill(constants.RED, (x, y, 2, 20))
-    #
-    #     return
-    #
-    # for x in range(0, constants.SCREEN_WIDTH, 2):
-    #     angle = player_entity.angle - (FOV / 2) + (FOV / constants.SCREEN_WIDTH * x)
-    #     segment = geometry.closest_wall_level(player_entity.position, play_screen.level, angle)
-    #     if segment:
-    #         surface.fill(segment.color, (x, y, 2, 20))
     rays = []
 
     position = player_entity.position
     level = play_screen.level
 
     for polygon in play_screen.level.collision:
-        for segment in polygon.segments:
-            angle = geometry.angle_between(position, segment.point1)
-            rays.append(new_ray(position, level, angle - 0.00001))
-            rays.append(new_ray(position, level, angle))
-            rays.append(new_ray(position, level, angle + 0.00001))
-
-            angle = geometry.angle_between(position, segment.point2)
+        for point in polygon.point_list:
+            angle = geometry.angle_between(position, point)
             rays.append(new_ray(position, level, angle - 0.00001))
             rays.append(new_ray(position, level, angle))
             rays.append(new_ray(position, level, angle + 0.00001))
