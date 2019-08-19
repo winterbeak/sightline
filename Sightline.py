@@ -72,6 +72,15 @@ FOV = player.FOV
 
 
 def draw_view(surface, y):
+    # Optimizes LEVEL_GRID by abusing the fact that it only has one color
+    if play_screen.level is LEVEL_GRID:
+        for x in range(0, constants.SCREEN_WIDTH, 2):
+            angle = player_entity.angle - (FOV / 2) + (FOV / constants.SCREEN_WIDTH * x)
+            if geometry.level_wall_in_direction(player_entity.position, play_screen.level, angle):
+                surface.fill(constants.RED, (x, y, 2, 20))
+
+        return
+
     for x in range(0, constants.SCREEN_WIDTH, 2):
         angle = player_entity.angle - (FOV / 2) + (FOV / constants.SCREEN_WIDTH * x)
         segment = geometry.closest_wall_level(player_entity.position, play_screen.level, angle)
@@ -951,6 +960,8 @@ def generate_level_12():
             y = int(spacing * row * 3 + spacing) + margin
             collision.append(geometry.Polygon(((x1, y), (x2, y)), False))
 
+    collision.pop(-2)  # removal of middle-bottom line
+
     # vertical lines
     for column in range(4):
         for row in range(3):
@@ -962,17 +973,15 @@ def generate_level_12():
     for polygon in collision:
         polygon.set_colors((RED, ))
 
-    collision.pop(1)  # removal of middle-top line
-
-    # goal 1
+    # bottom middle
     x1 = int(spacing * 4 + margin)
-    y1 = int(spacing + margin)
+    y1 = int(spacing * 7 + margin)
     x2 = x1 + int(spacing * 3)
     y2 = y1 + int(spacing * 3)
 
     goal_1 = geometry.Polygon(((x1, y1), (x2, y1), (x2, y2), (x1, y2)))
 
-    # goal 2
+    # middle left
     x1 = int(spacing + margin)
     y1 = int(spacing * 4 + margin)
     x2 = x1 + int(spacing * 3)
@@ -980,9 +989,9 @@ def generate_level_12():
 
     goal_2 = geometry.Polygon(((x1, y1), (x2, y1), (x2, y2), (x1, y2)))
 
-    # goal 3
+    # top right
     x1 = int(spacing * 7 + margin)
-    y1 = int(spacing * 7 + margin)
+    y1 = int(spacing + margin)
     x2 = x1 + int(spacing * 3)
     y2 = y1 + int(spacing * 3)
 
@@ -997,6 +1006,72 @@ def generate_level_12():
 
 
 LEVEL_GRID = generate_level_12()
+
+
+# Level 13: Warning sign/keyhole
+L13C0 = geometry.Polygon(((131, 100), (390, 250), (131, 400)))  # Triangle
+L13C0.set_colors((GREEN, GREEN, GREEN))
+L13C1 = geometry.Polygon(((203, 239), (260, 239), (260, 260), (203, 260)))  # Rectangle
+L13C1.set_colors((CYAN, CYAN, CYAN, CYAN))
+
+L13_collisions = (L13C0, L13C1)
+
+L13G0 = geometry.Polygon(((390, 250), (341, 222), (341, 278)))  # Right corner
+L13G1 = geometry.Polygon(((203, 239), (203, 260), (182, 260), (182, 239)))  # Left of rectangle
+L13G2 = geometry.Polygon(((203, 239), (260, 239), (260, 182), (203, 182)))  # Top of rectangle
+
+L13_goals = (L13G0, L13G1, L13G2)
+
+LEVEL_KEYHOLE = levels.Level(L13_collisions, L13_goals, (150, 150), math.pi / 4)
+LEVEL_KEYHOLE.set_goal_colors((PALE_GREEN, PALE_CYAN, PALE_ORANGE))
+
+
+# Level 14: H
+L14C0 = geometry.Polygon(((100, 100), (200, 100), (200, 200), # Starts with top left horizontal,
+                          (300, 200), (300, 100), (400, 100), # travels clockwise
+                          (400, 200), (400, 300), (400, 400), # Bottom right
+                          (300, 400), (300, 300), (200, 300),
+                          (200, 400), (100, 400), (100, 300),
+                          (100, 200)))
+L14C0.set_colors((YELLOW,
+                  GREEN, GREEN, GREEN,  # Bucket at top of the H
+                  YELLOW, GREEN, YELLOW, GREEN, YELLOW,
+                  GREEN, GREEN, GREEN,  # Bucket at bottom of the H
+                  YELLOW, GREEN, YELLOW, GREEN))
+
+L14_collisions = (L14C0, )
+
+L14G0 = geometry.Polygon(((100, 100), (200, 100), (200, 200), (100, 200)))  # Top left
+L14G1 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
+L14G2 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
+L14G3 = geometry.Polygon(((300, 300), (400, 300), (400, 400), (300, 400)))  # Bottom right
+
+L14_goals = (L14G0, L14G1, L14G2, L14G3)
+
+LEVEL_H = levels.Level(L14_collisions, L14_goals, (350, 250), math.pi)
+LEVEL_H.set_goal_colors((PALE_GREEN, PALE_MAGENTA, PALE_CYAN, PALE_YELLOW))
+
+
+# Level template
+# L#C0 = geometry.Polygon(((x, y), (x, y), (x, y)))
+# L#C0.set_colors((color1, color2, color3))
+# L#C1 = geometry.Polygon(((x, y), (x, y), (x, y),
+#                          (x, y), (x, y))
+# L#C1.set_colors((color1, color2, color3, color4, color5))
+# L#C2 = geometry.Polygon(((x, y), (x, y)))
+# L#C2.set_colors((color1))
+#
+# L#_collisions = (L#C0, L#C1, L#C2)
+#
+# L#G0 = geometry.Polygon(((x, y), (x, y), (x, y)))
+# L#G1 = geometry.Polygon(((x, y), (x, y), (x, y),
+#                          (x, y), (x, y)))
+# L#G2 = geometry.Polygon(((x, y), (x, y), (x, y), (x, y))
+#
+# L#_goals = (L#G0, L#G1, L#G2)
+#
+# L# = levels.Level(L#_collisions, L#_goals, (start_x, start_y), orientation)
+# L#.set_goal_colors((color1, color2, color3))
 
 
 # level_test_shape1_points = ((100, 100), (400, 200), (350, 400), (100, 200))
@@ -1025,9 +1100,11 @@ levels = (LEVEL_THREE_BOXES,
           LEVEL_WINGS,
           LEVEL_TWO_LINES,
           LEVEL_BUCKETS,
+          LEVEL_H,
           LEVEL_BOXCEPTION,
           LEVEL_HEXAGON,
           LEVEL_ELBOW,
+          LEVEL_KEYHOLE,
           LEVEL_GRID
           )
 last_level = len(levels) - 1
@@ -1056,8 +1133,8 @@ while True:
 
     ripples.draw(final_display)
 
-    # debug.debug(clock.get_fps())
-    # debug.debug(play_screen.mouse_option)
-    # debug.draw(final_display)
+    debug.debug(clock.get_fps())
+    debug.debug(play_screen.mouse_option)
+    debug.draw(final_display)
 
     screen_update(60)

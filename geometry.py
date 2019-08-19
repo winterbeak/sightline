@@ -33,11 +33,11 @@ def angle_between(from_position, to_position):
     return math.atan2(delta_y, delta_x)
 
 
-def angles_close(angle1, angle2):
+def angles_close(angle1, angle2, threshold=0.001):
     absolute_difference = abs(angle1 - angle2)
-    if absolute_difference < 0.001:
+    if absolute_difference < threshold:
         return True
-    elif abs(absolute_difference - math.pi * 2) < 0.001:
+    elif abs(absolute_difference - math.pi * 2) < threshold:
         return True
 
     return False
@@ -128,6 +128,19 @@ def closest_wall_level_intersection(position, level, angle):
                         closest_intersection = intersection
 
     return closest_intersection
+
+
+def level_wall_in_direction(position, level, angle):
+    line = Line(position, angle_to_slope(angle))
+    for polygon in level.collision:
+        for segment in polygon.segments:
+            intersection = line_segment_intersection(line, segment)
+            if intersection:
+                angle_check = angle_between(position, intersection)
+                if angles_close(angle, angle_check):
+                    return True
+
+    return False
 
 
 def component_in_direction(vector, direction):
