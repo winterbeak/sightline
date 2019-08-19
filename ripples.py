@@ -7,9 +7,6 @@ pygame.init()
 pygame.display.set_mode(constants.SCREEN_SIZE)
 
 
-ripples = []
-
-
 class Ripple:
     def __init__(self, position, color, final_radius=20, duration=30):
         self.frame = 0
@@ -40,29 +37,30 @@ class Ripple:
         pygame.draw.circle(surface, color, position, radius, 1)
 
 
-def create_ripple(position, color, final_radius=20, duration=30):
-    ripples.append(Ripple(position, color, final_radius, duration))
-
-
-def update():
-    ripple_num = len(ripples)
-    for ripple in reversed(ripples):
-        ripple_num -= 1
-        ripple.update()
-
-        if ripple.frame == ripple.last_frame:
-            del ripples[ripple_num]
-
-
 temp_surface = pygame.Surface(constants.SCREEN_SIZE).convert_alpha()
 
 
-def draw(surface, offset=(0, 0)):
-    temp_surface.fill((0, 0, 0, 0))
-    for ripple in ripples:
-        ripple.draw(temp_surface)
-    surface.blit(temp_surface, offset)
+class RippleHandler:
+    def __init__(self):
+        self.ripples = []
 
+    def update(self):
+        ripple_num = len(self.ripples)
+        for ripple in reversed(self.ripples):
+            ripple_num -= 1
+            ripple.update()
 
-def clear_ripples():
-    ripples.clear()
+            if ripple.frame == ripple.last_frame:
+                del self.ripples[ripple_num]
+
+    def draw(self, surface, offset=(0, 0)):
+        temp_surface.fill((0, 0, 0, 0))
+        for ripple in self.ripples:
+            ripple.draw(temp_surface)
+        surface.blit(temp_surface, offset)
+
+    def create_ripple(self, position, color, final_radius=20, duration=30):
+        self.ripples.append(Ripple(position, color, final_radius, duration))
+
+    def clear(self):
+        self.ripples.clear()

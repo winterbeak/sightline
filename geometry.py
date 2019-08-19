@@ -478,13 +478,3 @@ def screen_edge(point, angle, offset=(0, 0)):
         point = utility.add_tuples(point, offset)
 
     return farthest_wall_intersection(point, SCREEN_POLYGON, angle)
-
-
-def scale_position(position, anchor, scale):
-    """Returns the position of a point but 'scaled', as in 'pushed away'
-    from the given anchor"""
-    distance_between = distance(anchor, position)
-    angle = angle_between(anchor, position)
-
-    difference = vector_to_difference(angle, distance_between * scale)
-    return anchor[0] + difference[0], anchor[1] + difference[1]

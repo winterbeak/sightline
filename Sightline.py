@@ -61,6 +61,9 @@ circle_sounds = tuple(sound.load("circle%i" % i) for i in range(1, 9))
 
 level_offset = (0, 50)
 
+zoomed_ripples = ripples.RippleHandler()
+unzoomed_ripples = ripples.RippleHandler()
+
 
 def screen_update(fps):
     pygame.display.flip()
@@ -340,6 +343,9 @@ class PlayScreen:
                 self.pause()
 
         if not self.paused:
+            zoomed_ripples.update()
+            unzoomed_ripples.update()
+
             player_entity.update_movement(self.level)
 
             if self.pause_alpha > 0:
@@ -358,17 +364,17 @@ class PlayScreen:
                         self.changing_tutorial_stage = True
 
                         position = utility.add_tuples(player_entity.position, level_offset)
-                        ripples.create_ripple(position, BLACK, 30, 30)
+                        zoomed_ripples.create_ripple(position, BLACK, 30, 30)
 
                         for signal in self.signals:
                             position = utility.add_tuples(signal.position, level_offset)
-                            ripples.create_ripple(position, signal.color, 30, 30)
+                            zoomed_ripples.create_ripple(position, signal.color, 30, 30)
 
                         for index in range(self.level.goal_count):
                             x = constants.SCREEN_MIDDLE_INT[0] - self.signals_width // 2
                             x += index * self.SIGNAL_SPACING + Signal.RADIUS
 
-                            ripples.create_ripple((x, 90), self.signals[index].color, 30, 30)
+                            unzoomed_ripples.create_ripple((x, 90), self.signals[index].color, 30, 30)
 
                         self.show_player = False
 
@@ -442,15 +448,16 @@ class PlayScreen:
                             color = signal.color
                             anchor = utility.add_tuples(level_offset, constants.SCREEN_MIDDLE)
                             position = utility.add_tuples(signal.position, level_offset)
-                            position = geometry.scale_position(position, anchor, self.zoom)
                             position = utility.int_tuple(position)
 
-                            ripples.create_ripple(position, color, 30, 30)
+                            zoomed_ripples.create_ripple(position, color, 30, 30)
 
+                        if self.won:
+                            color = signal.color
                         else:
                             color = BLACK
 
-                        ripples.create_ripple((x, y), color, 30, 30)
+                        unzoomed_ripples.create_ripple((x, y), color, 30, 30)
 
                     if self.won:
                         if self.level_num == 0 and (self.tutorial_stage == 3 or self.tutorial_stage == 5):
@@ -590,6 +597,8 @@ class PlayScreen:
             if self.show_player:
                 player_entity.draw_debug(level_surface, play_screen.level, level_offset)
 
+            zoomed_ripples.draw(self.zoom_temp)
+
             if self.verdicting or self.drama_pausing or self.resulting:
                 width = int(self.zoom * constants.SCREEN_WIDTH)
                 height = int(self.zoom * constants.SCREEN_HEIGHT)
@@ -599,6 +608,8 @@ class PlayScreen:
                 surface.blit(zoom_surface, (x, y))
 
             draw_view(surface, 50)
+
+            unzoomed_ripples.draw(surface)
 
             y = 90
             for index in range(self.level.goal_count):
@@ -774,7 +785,7 @@ class PlayScreen:
             if self.show_circles and self.previous_signals:
                 for signal in self.previous_signals:
                     position = utility.add_tuples(signal.position, level_offset)
-                    ripples.create_ripple(position, signal.color, 30, 30)
+                    zoomed_ripples.create_ripple(position, signal.color, 30, 30)
             self.previous_signals = []
 
             self.verdict_frame = 0
@@ -1108,9 +1119,9 @@ LEVEL_KEYHOLE.set_goal_colors((PALE_GREEN, PALE_CYAN, PALE_ORANGE))
 
 
 # Level 14: H
-L14C0 = geometry.Polygon(((100, 100), (200, 100), (200, 200), # Starts with top left horizontal,
-                          (300, 200), (300, 100), (400, 100), # travels clockwise
-                          (400, 200), (400, 300), (400, 400), # Bottom right
+L14C0 = geometry.Polygon(((100, 100), (200, 100), (200, 200),  # Starts with top left horizontal,
+                          (300, 200), (300, 100), (400, 100),  # travels clockwise
+                          (400, 200), (400, 300), (400, 400),  # Bottom right
                           (300, 400), (300, 300), (200, 300),
                           (200, 400), (100, 400), (100, 300),
                           (100, 200)))
@@ -1204,15 +1215,10 @@ while True:
     events.update()
     sound.update()
 
-    if not play_screen.paused:
-        ripples.update()
-
     play_screen.update()
     if play_screen.quit_game:
         break
     play_screen.draw(final_display)
-
-    ripples.draw(final_display)
 
     debug.debug(clock.get_fps())
     debug.debug(play_screen.mouse_option)
