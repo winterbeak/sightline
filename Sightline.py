@@ -71,21 +71,121 @@ def screen_update(fps):
 FOV = player.FOV
 
 
+def new_ray(position, level, angle):
+    segment = geometry.closest_wall_level(position, level, angle)
+    if segment:
+        color = segment.color
+    else:
+        color = constants.WHITE
+
+    return angle, color
+
+
 def draw_view(surface, y):
-    # Optimizes LEVEL_GRID by abusing the fact that it only has one color
-    if play_screen.level is LEVEL_GRID:
-        for x in range(0, constants.SCREEN_WIDTH, 2):
-            angle = player_entity.angle - (FOV / 2) + (FOV / constants.SCREEN_WIDTH * x)
-            if geometry.level_wall_in_direction(player_entity.position, play_screen.level, angle):
-                surface.fill(constants.RED, (x, y, 2, 20))
+    # # Optimizes LEVEL_GRID by abusing the fact that it only has one color
+    # if play_screen.level is LEVEL_GRID:
+    #     for x in range(0, constants.SCREEN_WIDTH, 2):
+    #         angle = player_entity.angle - (FOV / 2) + (FOV / constants.SCREEN_WIDTH * x)
+    #         if geometry.level_wall_in_direction(player_entity.position, play_screen.level, angle):
+    #             surface.fill(constants.RED, (x, y, 2, 20))
+    #
+    #     return
+    #
+    # for x in range(0, constants.SCREEN_WIDTH, 2):
+    #     angle = player_entity.angle - (FOV / 2) + (FOV / constants.SCREEN_WIDTH * x)
+    #     segment = geometry.closest_wall_level(player_entity.position, play_screen.level, angle)
+    #     if segment:
+    #         surface.fill(segment.color, (x, y, 2, 20))
+    rays = []
 
-        return
+    position = player_entity.position
+    level = play_screen.level
 
-    for x in range(0, constants.SCREEN_WIDTH, 2):
-        angle = player_entity.angle - (FOV / 2) + (FOV / constants.SCREEN_WIDTH * x)
-        segment = geometry.closest_wall_level(player_entity.position, play_screen.level, angle)
-        if segment:
-            surface.fill(segment.color, (x, y, 2, 20))
+    for polygon in play_screen.level.collision:
+        for segment in polygon.segments:
+            angle = geometry.angle_between(position, segment.point1)
+            rays.append(new_ray(position, level, angle - 0.00001))
+            rays.append(new_ray(position, level, angle))
+            rays.append(new_ray(position, level, angle + 0.00001))
+
+            angle = geometry.angle_between(position, segment.point2)
+            rays.append(new_ray(position, level, angle - 0.00001))
+            rays.append(new_ray(position, level, angle))
+            rays.append(new_ray(position, level, angle + 0.00001))
+
+    rays.sort()  # sorts rays by their angle
+
+    lowest_angle = player_entity.angle - (FOV / 2.0)
+    highest_angle = player_entity.angle + (FOV / 2.0)
+
+    first_index = 0
+    lowest_difference = 10.0
+    for index, ray in enumerate(rays):
+        angle = ray[0]
+        while angle < lowest_angle:
+            angle += math.pi * 2
+        difference = angle - lowest_angle
+        if difference < lowest_difference:
+            lowest_difference = difference
+            first_index = index
+
+        while angle < lowest_angle + math.pi * 2:
+            angle += math.pi * 2
+        difference = angle - (lowest_angle + math.pi * 2)
+        if difference < lowest_difference:
+            lowest_difference = difference
+            first_index = index
+
+    previous_x = 0
+    previous_index = first_index - 1
+
+    current_index = first_index
+
+    # range(1000) rather than while True to prevent freezing.  If a level
+    # somehow has more than 166 segments, increase this number
+    for _ in range(1000):
+        if rays[current_index][1] != rays[previous_index][1]:
+            current_angle = rays[current_index - 1][0]
+            if current_angle > lowest_angle + math.pi * 2:
+                current_x = current_angle - (lowest_angle + math.pi * 2)
+            elif current_angle > lowest_angle:
+                current_x = current_angle - lowest_angle
+            else:
+                current_x = current_angle + math.pi * 2 - lowest_angle
+            current_x /= (FOV / constants.SCREEN_WIDTH)
+            current_x = int(current_x)
+
+            color = rays[previous_index][1]
+            if color != constants.WHITE:
+                width = current_x - previous_x
+                surface.fill(color, (previous_x, y, width, 20))
+
+            previous_x = current_x
+            previous_index = current_index
+
+        current_index += 1
+        if current_index >= len(rays):
+            current_index = 0
+
+        if current_index == first_index:
+            break
+
+        if lowest_angle > highest_angle:
+            normal_check = highest_angle < rays[current_index][0] < lowest_angle
+        elif lowest_angle < -math.pi:
+            normal_check = highest_angle < rays[current_index][0] < lowest_angle + math.pi * 2
+        else:
+            normal_check = highest_angle < rays[current_index][0]
+        modded_check = highest_angle - math.pi * 2 < rays[current_index][0] < lowest_angle
+        if normal_check or modded_check:
+            color = rays[current_index - 1][1]
+            if color != constants.WHITE:
+                width = constants.SCREEN_WIDTH - previous_x
+                surface.fill(color, (previous_x, y, width, 20))
+            break
+
+    else:
+        print("a")
 
 
 class TutorialText:

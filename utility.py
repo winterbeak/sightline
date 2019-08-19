@@ -21,6 +21,24 @@ def average(*args):
     return total / len(args)
 
 
+def binary_search_by_first_item(list_of_lists, value):
+    """Returns the first list whose first item is greater than the angle.
+
+    list_of_lists must be sorted by first item.
+    """
+    pointer_1 = 0
+    pointer_2 = len(list_of_lists) - 1
+
+    while pointer_1 < pointer_2:
+        middle = (pointer_1 + pointer_2) // 2
+        if list_of_lists[middle][0] < value:
+            pointer_1 = middle + 1
+        else:
+            pointer_2 = middle
+
+    return pointer_1
+
+
 def blit_vert_center(destination, surface, y):
     x = (destination.get_width() - surface.get_width()) // 2
     destination.blit(surface, (x, y))
