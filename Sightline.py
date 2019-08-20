@@ -446,7 +446,6 @@ class PlayScreen:
 
                         if self.won or self.show_circles:
                             color = signal.color
-                            anchor = utility.add_tuples(level_offset, constants.SCREEN_MIDDLE)
                             position = utility.add_tuples(signal.position, level_offset)
                             position = utility.int_tuple(position)
 
@@ -766,7 +765,7 @@ class PlayScreen:
 
         self.level_num = level_num
         if level_num <= last_level:
-            self.level = levels[level_num]
+            self.level = all_levels[level_num]
 
             self.clear_signals()
             self.signals_width = self.SIGNAL_SPACING * self.level.goal_count - self.SIGNAL_GAP
@@ -818,228 +817,263 @@ play_screen = PlayScreen()
 player_entity = player.Player()
 
 
+# Note: these level numbers are in order of creation
 # Level 0: Plus
-L0C0 = geometry.Polygon(((200, 300), (100, 300), (100, 200), (200, 200),  # left arm
-                         (200, 100), (300, 100), (300, 200),  # top arm
-                         (400, 200), (400, 300), (300, 300),  # right arm
-                         (300, 400), (200, 400)))  # bottom arm
-L0C0.set_colors((GREEN, BLUE, GREEN, GREEN, ORANGE, GREEN,
-                 GREEN, MAGENTA, GREEN, GREEN, RED, GREEN))
+def generate_plus_level():
+    collision_1 = geometry.Polygon(((200, 300), (100, 300), (100, 200), (200, 200),  # left arm
+                                    (200, 100), (300, 100), (300, 200),  # top arm
+                                    (400, 200), (400, 300), (300, 300),  # right arm
+                                    (300, 400), (200, 400)))  # bottom arm
+    collision_1.set_colors((GREEN, BLUE, GREEN, GREEN, ORANGE, GREEN,
+                            GREEN, MAGENTA, GREEN, GREEN, RED, GREEN))
 
-L0_collisions = (L0C0,)
+    collisions = (collision_1,)
 
-L0G0 = geometry.Polygon(((200, 300), (100, 300), (100, 200), (200, 200)))  # left goal
-L0G1 = geometry.Polygon(((200, 200), (200, 100), (300, 100), (300, 200)))  # top goal
-L0G2 = geometry.Polygon(((300, 200), (400, 200), (400, 300), (300, 300)))  # right goal
-L0G3 = geometry.Polygon(((300, 300), (300, 400), (200, 400), (200, 300)))  # bottom goal
+    goal_1 = geometry.Polygon(((200, 300), (100, 300), (100, 200), (200, 200)))  # left goal
+    goal_2 = geometry.Polygon(((200, 200), (200, 100), (300, 100), (300, 200)))  # top goal
+    goal_3 = geometry.Polygon(((300, 200), (400, 200), (400, 300), (300, 300)))  # right goal
+    goal_4 = geometry.Polygon(((300, 300), (300, 400), (200, 400), (200, 300)))  # bottom goal
 
-L0_goals = (L0G0, L0G1, L0G2, L0G3)
+    goals = (goal_1, goal_2, goal_3, goal_4)
 
-LEVEL_PLUS = levels.Level(L0_collisions, L0_goals, (250, 250), -math.pi / 2)
-LEVEL_PLUS.set_goal_colors((PALE_BLUE, PALE_ORANGE, PALE_MAGENTA, PALE_RED))
+    level = levels.Level(collisions, goals, (250, 250), -math.pi / 2)
+    level.set_goal_colors((PALE_BLUE, PALE_ORANGE, PALE_MAGENTA, PALE_RED))
+
+    return level
 
 
 # Level 1: Two spikes
-L1C0 = geometry.Polygon(((100, 125), (250, 225), (400, 125),  # indentation
-                         (400, 325), (100, 325)))  # bottom
-L1C0.set_colors((CYAN, MAGENTA, ORANGE, ORANGE, ORANGE))
+def generate_jesters_hat_level():
+    collision_1 = geometry.Polygon(((100, 125), (250, 225), (400, 125),  # indentation
+                                    (400, 325), (100, 325)))  # bottom
+    collision_1.set_colors((CYAN, MAGENTA, ORANGE, ORANGE, ORANGE))
 
-L1_collisions = (L1C0, )
+    collisions = (collision_1, )
 
-L1G0 = geometry.Polygon(((100, 125), (250, 225), (100, 225)))  # left
-L1G1 = geometry.Polygon(((400, 125), (250, 225), (400, 225)))  # right
-L1G2 = geometry.Polygon(((100, 225), (400, 225), (400, 325), (100, 325)))  # bottom
+    goal_1 = geometry.Polygon(((100, 125), (250, 225), (100, 225)))  # left
+    goal_2 = geometry.Polygon(((400, 125), (250, 225), (400, 225)))  # right
+    goal_3 = geometry.Polygon(((100, 225), (400, 225), (400, 325), (100, 325)))  # bottom
 
-L1_goals = (L1G0, L1G1, L1G2)
+    goals = (goal_1, goal_2, goal_3)
 
-LEVEL_TWO_SPIKES = levels.Level(L1_collisions, L1_goals, (250, 275), math.pi / 2)
-LEVEL_TWO_SPIKES.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_ORANGE))
+    level = levels.Level(collisions, goals, (250, 275), math.pi / 2)
+    level.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_ORANGE))
+
+    return level
 
 
 # Level 2: Outside of a triangle
-L2C0 = geometry.Polygon(((250, 150), (175, 280), (325, 280)))
-L2C0.set_colors((MAGENTA, YELLOW, RED))
+def generate_triangle_level():
+    collision_1 = geometry.Polygon(((250, 150), (175, 280), (325, 280)))
+    collision_1.set_colors((MAGENTA, YELLOW, RED))
 
-L2_collisions = (L2C0, )
+    collisions = (collision_1, )
 
-L2G0 = geometry.Polygon(((250, 150), (175, 280), (48, 205), (122, 77)))
-L2G1 = geometry.Polygon(((250, 150), (325, 280), (452, 205), (378, 77)))
-L2G2 = geometry.Polygon(((325, 280), (175, 280), (175, 430), (325, 430)))
+    goal_1 = geometry.Polygon(((250, 150), (175, 280), (48, 205), (122, 77)))
+    goal_2 = geometry.Polygon(((250, 150), (325, 280), (452, 205), (378, 77)))
+    goal_3 = geometry.Polygon(((325, 280), (175, 280), (175, 430), (325, 430)))
 
-L2_goals = (L2G0, L2G1, L2G2)
+    goals = (goal_1, goal_2, goal_3)
 
-LEVEL_TRIANGLE = levels.Level(L2_collisions, L2_goals, (457, 100), math.pi / 4 * 3)
-LEVEL_TRIANGLE.set_goal_colors((PALE_MAGENTA, PALE_RED, PALE_YELLOW))
+    level = levels.Level(collisions, goals, (457, 100), math.pi / 4 * 3)
+    level.set_goal_colors((PALE_MAGENTA, PALE_RED, PALE_YELLOW))
+
+    return level
 
 
 # Level 3: Three boxes
-L3C0 = geometry.Polygon(((50, 50), (50, 400), (450, 400)), False)  # Right angle
-L3C0.set_colors((YELLOW, RED))
-L3C1 = geometry.Polygon(((140, 175), (190, 175), (190, 225), (140, 225)))  # Left box
-L3C1.set_colors((CYAN, MAGENTA, CYAN, MAGENTA))
-L3C2 = geometry.Polygon(((225, 175), (275, 175), (275, 225), (225, 225)))  # Middle box
-L3C2.set_colors((CYAN, MAGENTA, CYAN, MAGENTA))
-L3C3 = geometry.Polygon(((310, 175), (360, 175), (360, 225), (310, 225)))  # Right box
-L3C3.set_colors((CYAN, MAGENTA, CYAN, MAGENTA))
+def generate_three_boxes_level():
+    collision_1 = geometry.Polygon(((50, 50), (50, 400), (450, 400)), False)  # Right angle
+    collision_1.set_colors((YELLOW, RED))
+    collision_2 = geometry.Polygon(((140, 175), (190, 175), (190, 225), (140, 225)))  # Left box
+    collision_2.set_colors((CYAN, MAGENTA, CYAN, MAGENTA))
+    collision_3 = geometry.Polygon(((225, 175), (275, 175), (275, 225), (225, 225)))  # Middle box
+    collision_3.set_colors((CYAN, MAGENTA, CYAN, MAGENTA))
+    collision_4 = geometry.Polygon(((310, 175), (360, 175), (360, 225), (310, 225)))  # Right box
+    collision_4.set_colors((CYAN, MAGENTA, CYAN, MAGENTA))
 
-L3_collisions = (L3C0, L3C1, L3C2, L3C3)
+    collisions = (collision_1, collision_2, collision_3, collision_4)
 
-L3G0 = geometry.Polygon(((50, 175), (100, 175), (100, 225), (50, 225)))  # Left goal
-L3G1 = geometry.Polygon(((225, 350), (275, 350), (275, 400), (225, 400)))  # Bottom goal
+    goal_1 = geometry.Polygon(((50, 175), (100, 175), (100, 225), (50, 225)))  # Left goal
+    goal_2 = geometry.Polygon(((225, 350), (275, 350), (275, 400), (225, 400)))  # Bottom goal
 
-L3_goals = (L3G0, L3G1)
+    goals = (goal_1, goal_2)
 
-LEVEL_THREE_BOXES = levels.Level(L3_collisions, L3_goals, (250, 312), -math.pi / 2)
-LEVEL_THREE_BOXES.set_goal_colors((PALE_MAGENTA, PALE_CYAN))
+    level = levels.Level(collisions, goals, (250, 312), -math.pi / 2)
+    level.set_goal_colors((PALE_MAGENTA, PALE_CYAN))
+
+    return level
 
 
 # Level 4: Single line
-L4C0 = geometry.Polygon(((200, 200), (300, 300)), False)
-L4C0.set_colors((GREEN, ))
+def generate_single_line_level():
+    collision_1 = geometry.Polygon(((200, 200), (300, 300)), False)
+    collision_1.set_colors((GREEN, ))
 
-L4_collisions = (L4C0, )
+    collisions = (collision_1, )
 
-L4G0 = geometry.Polygon(((200, 200), (300, 300), (350, 250), (250, 150)))  # Top right goal
-L4G1 = geometry.Polygon(((200, 200), (300, 300), (250, 350), (150, 250)))  # Bottom left goal
+    goal_1 = geometry.Polygon(((200, 200), (300, 300), (350, 250), (250, 150)))  # Top right goal
+    goal_2 = geometry.Polygon(((200, 200), (300, 300), (250, 350), (150, 250)))  # Bottom left goal
 
-L4_goals = (L4G0, L4G1)
+    goals = (goal_1, goal_2)
 
-LEVEL_SINGLE_LINE = levels.Level(L4_collisions, L4_goals, (120, 350), -math.pi / 2)
-LEVEL_SINGLE_LINE.set_goal_colors((PALE_YELLOW, PALE_GREEN))
+    level = levels.Level(collisions, goals, (120, 350), -math.pi / 2)
+    level.set_goal_colors((PALE_YELLOW, PALE_GREEN))
+
+    return level
 
 
 # Level 5: Box in a box
-L5C0 = geometry.Polygon(((100, 100), (400, 100), (400, 400), (100, 400)))
-L5C0.set_colors((CYAN, CYAN, RED, RED))
-L5C1 = geometry.Polygon(((225, 225), (275, 225), (275, 275), (225, 275)))
-L5C1.set_colors((RED, CYAN, CYAN, RED))
+def generate_boxception_level():
+    collision_1 = geometry.Polygon(((100, 100), (400, 100), (400, 400), (100, 400)))
+    collision_1.set_colors((CYAN, CYAN, RED, RED))
+    collision_2 = geometry.Polygon(((225, 225), (275, 225), (275, 275), (225, 275)))
+    collision_2.set_colors((RED, CYAN, CYAN, RED))
 
-L5_collisions = (L5C0, L5C1)
+    collisions = (collision_1, collision_2)
 
-L5G0 = geometry.Polygon(((100, 100), (400, 100), (275, 225), (225, 225)))
-L5G1 = geometry.Polygon(((400, 400), (100, 400), (225, 275), (275, 275)))
+    goal_1 = geometry.Polygon(((100, 100), (400, 100), (275, 225), (225, 225)))
+    goal_2 = geometry.Polygon(((400, 400), (100, 400), (225, 275), (275, 275)))
 
-L5_goals = (L5G0, L5G1)
+    goals = (goal_1, goal_2)
 
-LEVEL_BOXCEPTION = levels.Level(L5_collisions, L5_goals, (300, 300), math.pi / 5)
-LEVEL_BOXCEPTION.set_goal_colors((PALE_CYAN, PALE_RED))
+    level = levels.Level(collisions, goals, (300, 300), math.pi / 5)
+    level.set_goal_colors((PALE_CYAN, PALE_RED))
+
+    return level
 
 
 # Level 6: Five lines
-L6C0 = geometry.Polygon(((199, 133), (149, 169)), False)  # Top left
-L6C0.set_colors((ORANGE, ))
-L6C1 = geometry.Polygon(((301, 133), (351, 169)), False)  # Top right
-L6C1.set_colors((ORANGE, ))
-L6C2 = geometry.Polygon(((383, 266), (363, 325)), False)  # Bottom right
-L6C2.set_colors((ORANGE, ))
-L6C3 = geometry.Polygon(((281, 386), (219, 386)), False)  # Bottom
-L6C3.set_colors((ORANGE, ))
-L6C4 = geometry.Polygon(((117, 266), (137, 325)), False)  # Bottom left
-L6C4.set_colors((ORANGE, ))
+def generate_pentagon_level():
+    collision_1 = geometry.Polygon(((199, 133), (149, 169)), False)  # Top left
+    collision_1.set_colors((ORANGE, ))
+    collision_2 = geometry.Polygon(((301, 133), (351, 169)), False)  # Top right
+    collision_2.set_colors((ORANGE, ))
+    collision_3 = geometry.Polygon(((383, 266), (363, 325)), False)  # Bottom right
+    collision_3.set_colors((ORANGE, ))
+    collision_4 = geometry.Polygon(((281, 386), (219, 386)), False)  # Bottom
+    collision_4.set_colors((ORANGE, ))
+    collision_5 = geometry.Polygon(((117, 266), (137, 325)), False)  # Bottom left
+    collision_5.set_colors((ORANGE, ))
 
+    collisions = (collision_1, collision_2, collision_3, collision_4, collision_5)
 
-L6_collisions = (L6C0, L6C1, L6C2, L6C3, L6C4)
+    goal_1 = geometry.make_pentagon(24, (250, 250), -math.pi / 2)
 
-L6G0 = geometry.Polygon(((250, 231), (273, 248), (264, 275),
-                         (236, 275), (227, 248)))
+    goals = (goal_1, )
 
-L6_goals = (L6G0, )
+    level = levels.Level(collisions, goals, (39, 404), -math.pi / 3)
+    level.set_goal_colors((PALE_ORANGE, ))
 
-LEVEL_PENTAGON = levels.Level(L6_collisions, L6_goals, (39, 404), -math.pi / 3)
-LEVEL_PENTAGON.set_goal_colors((PALE_ORANGE, ))
+    return level
 
 
 # Level 7: Two buckets
-L7C0 = geometry.Polygon(((100, 100), (100, 400), (400, 400), (400, 100)), False)  # outside
-L7C0.set_colors((RED, GREEN, BLUE))
-L7C1 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)), False)
-L7C1.set_colors((RED, GREEN, BLUE))
+def generate_buckets_level():
+    collision_1 = geometry.Polygon(((100, 100), (100, 400), (400, 400), (400, 100)), False)  # outside
+    collision_1.set_colors((RED, GREEN, BLUE))
+    collision_2 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)), False)
+    collision_2.set_colors((RED, GREEN, BLUE))
 
-L7_collisions = (L7C0, L7C1)
+    collisions = (collision_1, collision_2)
 
-L7G0 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)))  # Center
-L7G1 = geometry.Polygon(((100, 100), (200, 100), (200, 200), (100, 200)))  # Top left
-L7G2 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
-L7G3 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
-L7G4 = geometry.Polygon(((300, 300), (300, 400), (400, 400), (400, 300)))  # Bottom right
-L7_goals = (L7G0, L7G1, L7G2, L7G3, L7G4)
+    goal_1 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)))  # Center
+    goal_2 = geometry.Polygon(((100, 100), (200, 100), (200, 200), (100, 200)))  # Top left
+    goal_3 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
+    goal_4 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
+    goal_5 = geometry.Polygon(((300, 300), (300, 400), (400, 400), (400, 300)))  # Bottom right
+    goals = (goal_1, goal_2, goal_3, goal_4, goal_5)
 
-LEVEL_BUCKETS = levels.Level(L7_collisions, L7_goals, (357, 137), math.pi / 3 * 2)
-LEVEL_BUCKETS.set_goal_colors((PALE_GREEN, PALE_RED, PALE_BLUE, PALE_CYAN, PALE_MAGENTA))
+    level = levels.Level(collisions, goals, (357, 137), math.pi / 3 * 2)
+    level.set_goal_colors((PALE_GREEN, PALE_RED, PALE_BLUE, PALE_CYAN, PALE_MAGENTA))
+
+    return level
 
 
 # Level 8: Two lines
-L8C0 = geometry.Polygon(((200, 200), (400, 200)), False)  # top
-L8C0.set_colors((CYAN, ))
-L8C1 = geometry.Polygon(((100, 300), (300, 300)), False)  # bottom
-L8C1.set_colors((YELLOW, ))
+def generate_two_lines_level():
+    collision_1 = geometry.Polygon(((200, 200), (400, 200)), False)  # top
+    collision_1.set_colors((CYAN, ))
+    collision_2 = geometry.Polygon(((100, 300), (300, 300)), False)  # bottom
+    collision_2.set_colors((YELLOW, ))
 
-L8_collisions = (L8C0, L8C1)
+    collisions = (collision_1, collision_2)
 
-L8G0 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)))  # Center
-L8G1 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
-L8G2 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
-L8_goals = (L8G0, L8G1, L8G2)
+    goal_1 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)))  # Center
+    goal_2 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
+    goal_3 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
+    goals = (goal_1, goal_2, goal_3)
 
-LEVEL_TWO_LINES = levels.Level(L8_collisions, L8_goals, (65, 357), -math.pi / 3)
-LEVEL_TWO_LINES.set_goal_colors((PALE_ORANGE, PALE_CYAN, PALE_YELLOW))
+    level = levels.Level(collisions, goals, (65, 357), -math.pi / 3)
+    level.set_goal_colors((PALE_ORANGE, PALE_CYAN, PALE_YELLOW))
+
+    return level
 
 
 # Level 9: Barrier
-L9C0 = geometry.Polygon(((113, 260), (200, 240), (300, 240), (387, 260)), False)
-L9C0.set_colors((MAGENTA, CYAN, MAGENTA))
+def generate_wings_level():
+    collision_1 = geometry.Polygon(((113, 260), (200, 240), (300, 240), (387, 260)), False)
+    collision_1.set_colors((MAGENTA, CYAN, MAGENTA))
 
-L9_collisions = (L9C0, )
+    collisions = (collision_1, )
 
-L9G0 = geometry.Polygon(((200, 240), (300, 240), (300, 340), (200, 340)))  # Bottom
-L9G1 = geometry.Polygon(((113, 260), (200, 240), (180, 153), (93, 173)))  # Top left
-L9G2 = geometry.Polygon(((387, 260), (300, 240), (320, 153), (407, 173)))  # Top right
+    goal_1 = geometry.Polygon(((200, 240), (300, 240), (300, 340), (200, 340)))  # Bottom
+    goal_2 = geometry.Polygon(((113, 260), (200, 240), (180, 153), (93, 173)))  # Top left
+    goal_3 = geometry.Polygon(((387, 260), (300, 240), (320, 153), (407, 173)))  # Top right
 
-L9_goals = (L9G0, L9G1, L9G2)
+    goals = (goal_1, goal_2, goal_3)
 
-LEVEL_WINGS = levels.Level(L9_collisions, L9_goals, (50, 250), 0.0)
-LEVEL_WINGS.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_YELLOW))
+    level = levels.Level(collisions, goals, (50, 250), 0.0)
+    level.set_goal_colors((PALE_CYAN, PALE_MAGENTA, PALE_YELLOW))
+
+    return level
 
 
 # Level 10: Hexagon
-L10C0 = geometry.Polygon(((250, 108), (374, 179), (374, 321),
-                          (250, 392), (127, 321), (127, 179)))  # Hexagon
-L10C0.set_colors((RED, MAGENTA, RED, RED, MAGENTA, RED))
-L10C1 = geometry.Polygon(((250, 250), (250, 199)), False)  # Up
-L10C1.set_colors((ORANGE, ))
-L10C2 = geometry.Polygon(((250, 250), (205, 276)), False)  # Bottom left
-L10C2.set_colors((ORANGE, ))
-L10C3 = geometry.Polygon(((250, 250), (295, 276)), False)  # Bottom right
-L10C3.set_colors((ORANGE, ))
+def generate_hexagon_level():
+    collision_1 = geometry.Polygon(((250, 108), (374, 179), (374, 321),
+                                    (250, 392), (127, 321), (127, 179)))  # Hexagon
+    collision_1.set_colors((RED, MAGENTA, RED, RED, MAGENTA, RED))
+    collision_2 = geometry.Polygon(((250, 250), (250, 199)), False)  # Up
+    collision_2.set_colors((ORANGE, ))
+    collision_3 = geometry.Polygon(((250, 250), (205, 276)), False)  # Bottom left
+    collision_3.set_colors((ORANGE, ))
+    collision_4 = geometry.Polygon(((250, 250), (295, 276)), False)  # Bottom right
+    collision_4.set_colors((ORANGE, ))
 
-L10_collisions = (L10C0, L10C1, L10C2, L10C3)
+    collisions = (collision_1, collision_2, collision_3, collision_4)
 
-L10G0 = geometry.Polygon(((250, 250), (250, 199), (205, 225), (205, 276)))  # Top left
-L10G1 = geometry.Polygon(((250, 250), (250, 199), (295, 225), (295, 276)))  # Top right
+    goal_1 = geometry.Polygon(((250, 250), (250, 199), (205, 225), (205, 276)))  # Top left
+    goal_2 = geometry.Polygon(((250, 250), (250, 199), (295, 225), (295, 276)))  # Top right
 
-L10_goals = (L10G0, L10G1)
+    goals = (goal_1, goal_2)
 
-LEVEL_HEXAGON = levels.Level(L10_collisions, L10_goals, (240, 275), math.pi)
-LEVEL_HEXAGON.set_goal_colors((PALE_ORANGE, PALE_MAGENTA))
+    level = levels.Level(collisions, goals, (240, 275), math.pi)
+    level.set_goal_colors((PALE_ORANGE, PALE_MAGENTA))
+
+    return level
 
 
 # Level 11: Elbow
-L11C0 = geometry.Polygon(((200, 200), (300, 200), (200, 300)), False)
-L11C0.set_colors((CYAN, CYAN))
+def generate_elbow_level():
+    collision_1 = geometry.Polygon(((200, 200), (300, 200), (200, 300)), False)
+    collision_1.set_colors((CYAN, CYAN))
 
-L11_collisions = (L11C0, )
+    collisions = (collision_1, )
 
-L11G0 = geometry.Polygon(((200, 200), (300, 200), (200, 300)))  # Inside
-L11G1 = geometry.Polygon(((200, 200), (250, 200), (250, 150), (200, 150)))  # Top
+    goal_1 = geometry.Polygon(((200, 200), (300, 200), (200, 300)))  # Inside
+    goal_2 = geometry.Polygon(((200, 200), (250, 200), (250, 150), (200, 150)))  # Top
 
-L11_goals = (L11G0, L11G1)
+    goals = (goal_1, goal_2)
 
-LEVEL_ELBOW = levels.Level(L11_collisions, L11_goals, (400, 50), math.pi / 4 * 3)
-LEVEL_ELBOW.set_goal_colors((PALE_CYAN, PALE_ORANGE))
+    level = levels.Level(collisions, goals, (400, 50), math.pi / 4 * 3)
+    level.set_goal_colors((PALE_CYAN, PALE_ORANGE))
+
+    return level
 
 
 # Level 12: Grid
-def generate_level_12():
+def generate_grid_level():
     margin = 50
     spacing = 400 / 11
     collision = []
@@ -1097,68 +1131,96 @@ def generate_level_12():
     return level
 
 
-LEVEL_GRID = generate_level_12()
-
-
 # Level 13: Warning sign/keyhole
-L13C0 = geometry.Polygon(((131, 100), (390, 250), (131, 400)))  # Triangle
-L13C0.set_colors((GREEN, GREEN, GREEN))
-L13C1 = geometry.Polygon(((203, 239), (260, 239), (260, 260), (203, 260)))  # Rectangle
-L13C1.set_colors((CYAN, CYAN, CYAN, CYAN))
+def generate_keyhole_level():
+    collision_1 = geometry.Polygon(((131, 100), (390, 250), (131, 400)))  # Triangle
+    collision_1.set_colors((GREEN, GREEN, GREEN))
+    collision_2 = geometry.Polygon(((203, 239), (260, 239), (260, 260), (203, 260)))  # Rectangle
+    collision_2.set_colors((CYAN, CYAN, CYAN, CYAN))
 
-L13_collisions = (L13C0, L13C1)
+    collisions = (collision_1, collision_2)
 
-L13G0 = geometry.Polygon(((390, 250), (341, 222), (341, 278)))  # Right corner
-L13G1 = geometry.Polygon(((203, 239), (203, 260), (182, 260), (182, 239)))  # Left of rectangle
-L13G2 = geometry.Polygon(((203, 239), (260, 239), (260, 182), (203, 182)))  # Top of rectangle
+    goal_1 = geometry.Polygon(((390, 250), (341, 222), (341, 278)))  # Right corner
+    goal_2 = geometry.Polygon(((203, 239), (203, 260), (182, 260), (182, 239)))  # Left of rectangle
+    goal_3 = geometry.Polygon(((203, 239), (260, 239), (260, 182), (203, 182)))  # Top of rectangle
 
-L13_goals = (L13G0, L13G1, L13G2)
+    goals = (goal_1, goal_2, goal_3)
 
-LEVEL_KEYHOLE = levels.Level(L13_collisions, L13_goals, (150, 150), math.pi / 4)
-LEVEL_KEYHOLE.set_goal_colors((PALE_GREEN, PALE_CYAN, PALE_ORANGE))
+    level = levels.Level(collisions, goals, (150, 150), math.pi / 4)
+    level.set_goal_colors((PALE_GREEN, PALE_CYAN, PALE_YELLOW))
+
+    return level
 
 
 # Level 14: H
-L14C0 = geometry.Polygon(((100, 100), (200, 100), (200, 200),  # Starts with top left horizontal,
-                          (300, 200), (300, 100), (400, 100),  # travels clockwise
-                          (400, 200), (400, 300), (400, 400),  # Bottom right
-                          (300, 400), (300, 300), (200, 300),
-                          (200, 400), (100, 400), (100, 300),
-                          (100, 200)))
-L14C0.set_colors((YELLOW,
-                  GREEN, GREEN, GREEN,  # Bucket at top of the H
-                  YELLOW, GREEN, YELLOW, GREEN, YELLOW,
-                  GREEN, GREEN, GREEN,  # Bucket at bottom of the H
-                  YELLOW, GREEN, YELLOW, GREEN))
+def generate_h_level():
+    collision_1 = geometry.Polygon(((100, 100), (200, 100), (200, 200),  # Starts with top left horizontal,
+                                    (300, 200), (300, 100), (400, 100),  # travels clockwise
+                                    (400, 200), (400, 300), (400, 400),  # Bottom right
+                                    (300, 400), (300, 300), (200, 300),
+                                    (200, 400), (100, 400), (100, 300),
+                                    (100, 200)))
+    collision_1.set_colors((YELLOW,
+                            GREEN, GREEN, GREEN,  # Bucket at top of the H
+                            YELLOW, GREEN, YELLOW, GREEN, YELLOW,
+                            GREEN, GREEN, GREEN,  # Bucket at bottom of the H
+                            YELLOW, GREEN, YELLOW, GREEN))
 
-L14_collisions = (L14C0, )
+    collisions = (collision_1, )
 
-L14G0 = geometry.Polygon(((100, 100), (200, 100), (200, 200), (100, 200)))  # Top left
-L14G1 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
-L14G2 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
-L14G3 = geometry.Polygon(((300, 300), (400, 300), (400, 400), (300, 400)))  # Bottom right
+    goal_1 = geometry.Polygon(((100, 100), (200, 100), (200, 200), (100, 200)))  # Top left
+    goal_2 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
+    goal_3 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
+    goal_4 = geometry.Polygon(((300, 300), (400, 300), (400, 400), (300, 400)))  # Bottom right
 
-L14_goals = (L14G0, L14G1, L14G2, L14G3)
+    goals = (goal_1, goal_2, goal_3, goal_4)
 
-LEVEL_H = levels.Level(L14_collisions, L14_goals, (350, 250), math.pi)
-LEVEL_H.set_goal_colors((PALE_GREEN, PALE_MAGENTA, PALE_CYAN, PALE_YELLOW))
+    level = levels.Level(collisions, goals, (350, 250), math.pi)
+    level.set_goal_colors((PALE_GREEN, PALE_MAGENTA, PALE_CYAN, PALE_YELLOW))
+
+    return level
+
+
+# Level 15: Perspective Pegs
+def generate_pegs_level():
+    collision = []
+    points = geometry.make_pentagon(150, (250, 250), -math.pi / 2)
+    for point in points.point_list:
+        collision.append(geometry.make_pentagon(50, point, math.pi / 2))
+    collision[0].set_colors((GREEN, RED, BLUE, YELLOW, MAGENTA))
+    collision[1].set_colors((GREEN, RED, BLUE, YELLOW, MAGENTA))
+    collision[2].set_colors((BLUE, YELLOW, MAGENTA, GREEN, RED))
+    collision[3].set_colors((MAGENTA, GREEN, RED, BLUE, YELLOW))
+    collision[4].set_colors((RED, BLUE, YELLOW, MAGENTA, GREEN))
+
+    segment = collision[0].segments[4]
+    goal_1 = geometry.two_point_square(segment.point1, segment.point2, False)
+    segment = collision[3].segments[2]
+    goal_2 = geometry.two_point_square(segment.point1, segment.point2, True)
+    segment = collision[2].segments[3]
+    goal_3 = geometry.two_point_square(segment.point1, segment.point2, True)
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = levels.Level(collision, goals, (400, 100), math.pi / 4 * 3)
+    level.set_goal_colors((PALE_MAGENTA, PALE_RED, PALE_GREEN))
+
+    return level
 
 
 # Level template
 # L#C0 = geometry.Polygon(((x, y), (x, y), (x, y)))
 # L#C0.set_colors((color1, color2, color3))
-# L#C1 = geometry.Polygon(((x, y), (x, y), (x, y),
-#                          (x, y), (x, y))
-# L#C1.set_colors((color1, color2, color3, color4, color5))
+# L#C1 = geometry.Polygon(((x, y), (x, y), (x, y)))
+# L#C1.set_colors((color1, color2, color3))
 # L#C2 = geometry.Polygon(((x, y), (x, y)))
 # L#C2.set_colors((color1))
 #
 # L#_collisions = (L#C0, L#C1, L#C2)
 #
 # L#G0 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#G1 = geometry.Polygon(((x, y), (x, y), (x, y),
-#                          (x, y), (x, y)))
-# L#G2 = geometry.Polygon(((x, y), (x, y), (x, y), (x, y))
+# L#G1 = geometry.Polygon(((x, y), (x, y), (x, y)))
+# L#G2 = geometry.Polygon(((x, y), (x, y), (x, y), (x, y)))
 #
 # L#_goals = (L#G0, L#G1, L#G2)
 #
@@ -1183,23 +1245,24 @@ LEVEL_H.set_goal_colors((PALE_GREEN, PALE_MAGENTA, PALE_CYAN, PALE_YELLOW))
 #                            level_test_polygon3))
 
 # Note: the levels are actually out of order
-levels = (LEVEL_THREE_BOXES,
-          LEVEL_TWO_SPIKES,
-          LEVEL_TRIANGLE,
-          LEVEL_PLUS,
-          LEVEL_SINGLE_LINE,
-          LEVEL_PENTAGON,
-          LEVEL_WINGS,
-          LEVEL_TWO_LINES,
-          LEVEL_BUCKETS,
-          LEVEL_H,
-          LEVEL_BOXCEPTION,
-          LEVEL_HEXAGON,
-          LEVEL_ELBOW,
-          LEVEL_KEYHOLE,
-          LEVEL_GRID
-          )
-last_level = len(levels) - 1
+all_levels = (generate_three_boxes_level(),
+              generate_jesters_hat_level(),
+              generate_triangle_level(),
+              generate_plus_level(),
+              generate_single_line_level(),
+              generate_pentagon_level(),
+              generate_wings_level(),
+              generate_two_lines_level(),
+              generate_buckets_level(),
+              generate_pegs_level(),
+              generate_h_level(),
+              generate_boxception_level(),
+              generate_hexagon_level(),
+              generate_elbow_level(),
+              generate_keyhole_level(),
+              generate_grid_level()
+              )
+last_level = len(all_levels) - 1
 
 play_screen.load_level(0)
 play_screen.show_player = True

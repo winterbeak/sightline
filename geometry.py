@@ -342,6 +342,60 @@ def points_to_segment_list(point_list, closed=True):
     return segment_list
 
 
+def make_pentagon(radius, center_point, angle=0.0):
+    """Returns a 5-sided regular Polygon.
+
+    radius is the distance from the center to any vertex.
+    angle is the rotation of the pentagon, in radians.
+    """
+    points = []
+    for point in range(5):
+        point_angle = angle + point * (math.pi * 2 / 5)
+        difference = vector_to_difference(point_angle, radius)
+
+        position = utility.add_tuples(center_point, difference)
+        position = utility.int_tuple(position)
+
+        points.append(position)
+
+    return Polygon(points)
+
+
+def two_point_square(point1, point2, extend_upwards):
+    """Returns a 4-sided regular Polygon, using two points as the base segment
+    and extending.
+
+    If extend_upwards is True, the square will extend in the direction
+    of the most upwards angled side.  If False, it will extend downwards.
+
+    If the points make a vertical line, left will be considered the most
+    upwards side.
+    """
+    slope = two_point_slope(point1, point2)
+    if math.isinf(slope):
+        if extend_upwards:
+            angle = math.pi
+        else:
+            angle = 0.0
+    else:
+        if extend_upwards:
+            angle = slope_to_angle(slope) - math.pi / 2
+        else:
+            angle = slope_to_angle(slope) + math.pi / 2
+
+    print(slope)
+    print(angle)
+
+    difference = vector_to_difference(angle, distance(point1, point2))
+    point3 = utility.add_tuples(point2, difference)
+    point4 = utility.add_tuples(point1, difference)
+    point3 = utility.int_tuple(point3)
+    point4 = utility.int_tuple(point4)
+
+    print(point1, point2, point3, point4)
+    return Polygon((point1, point2, point3, point4))
+
+
 def segment_extended_intersection(segment_1, segment_2):
     """Returns the intersection of two segments, as if the segments were
     extended infinitely.
