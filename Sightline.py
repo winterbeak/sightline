@@ -168,9 +168,6 @@ def draw_view(surface, y):
                 surface.fill(color, (previous_x, y, width, 20))
             break
 
-    else:
-        print("a")
-
 
 class TutorialText:
     def __init__(self, string, y):
@@ -274,8 +271,8 @@ class PlayScreen:
     COMFORTABLE_TEXT = TutorialText("Once you're comfortable, click to continue.", 475)
 
     CREDITS_TEXT = (TutorialText("Thanks for playing!", 160),
-                    TutorialText("Programming and visuals by winterbeak.", 200),
-                    TutorialText("winterbeak.itch.io", 220),
+                    TutorialText("Programming and visuals by winterbeak.", 220),
+                    TutorialText("winterbeak.itch.io", 240),
                     TutorialText("Audio by saiziju.", 280),
                     TutorialText("saiziju.itch.io", 300))
 
@@ -346,8 +343,6 @@ class PlayScreen:
             zoomed_ripples.update()
             unzoomed_ripples.update()
 
-            player_entity.update_movement(self.level)
-
             if self.pause_alpha > 0:
                 self.pause_alpha -= self.PAUSE_FADE_SPEED
 
@@ -355,6 +350,8 @@ class PlayScreen:
                     self.pause_alpha = 0
 
                 self.pause_overlay.set_alpha(self.pause_alpha * self.OVERLAY_OPACITY)
+
+            player_entity.update_movement(self.level)
 
             if events.mouse.released:
                 if self.level_num == 0 and not self.changing_tutorial_stage:
@@ -775,6 +772,15 @@ class PlayScreen:
             player_entity.angle = self.level.start_orientation + 0.000001
 
     def place_signal(self, position):
+        """Places a circle (known as a Signal earlier in development) onto
+        the level, at the given position.
+        """
+
+        # This fixes a bug where, if you use the Change Level buttons to go to
+        # the credits, you can still place signals for some reason.
+        if self.level_num > last_level:
+            return
+
         if self.placed_signals < self.level.goal_count:
             sound.play(circle_sounds[self.placed_signals])
             self.signals.append(Signal(position, self.level))
@@ -958,7 +964,7 @@ def generate_pentagon_level():
 
     collisions = (collision_1, collision_2, collision_3, collision_4, collision_5)
 
-    goal_1 = geometry.make_pentagon(24, (250, 250), -math.pi / 2)
+    goal_1 = geometry.regular_polygon(5, 24, (250, 250), -math.pi / 2)
 
     goals = (goal_1, )
 
@@ -1054,7 +1060,7 @@ def generate_hexagon_level():
     return level
 
 
-# Level 11: Elbow
+# Level 11A: Elbow
 def generate_elbow_level():
     collision_1 = geometry.Polygon(((200, 200), (300, 200), (200, 300)), False)
     collision_1.set_colors((CYAN, CYAN))
@@ -1068,6 +1074,26 @@ def generate_elbow_level():
 
     level = levels.Level(collisions, goals, (400, 50), math.pi / 4 * 3)
     level.set_goal_colors((PALE_CYAN, PALE_ORANGE))
+
+    return level
+
+
+# Level 11B: Square
+def generate_square_level():
+    collision_1 = geometry.Polygon(((200, 300), (200, 200),
+                                    (300, 200), (300, 300)), False)
+    collision_1.set_colors((CYAN, CYAN, CYAN))
+
+    collisions = (collision_1, )
+
+    goal_1 = geometry.Polygon(((200, 300), (200, 200), (300, 200), (300, 300)))  # Inside
+    goal_2 = geometry.Polygon(((100, 200), (200, 200), (200, 300), (100, 300)))  # Left
+    goal_3 = geometry.Polygon(((300, 200), (400, 200), (400, 300), (300, 300)))  # Right
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = levels.Level(collisions, goals, (400, 50), math.pi / 4 * 3)
+    level.set_goal_colors((PALE_CYAN, PALE_BLUE, PALE_YELLOW))
 
     return level
 
@@ -1142,7 +1168,7 @@ def generate_keyhole_level():
 
     goal_1 = geometry.Polygon(((390, 250), (341, 222), (341, 278)))  # Right corner
     goal_2 = geometry.Polygon(((203, 239), (203, 260), (182, 260), (182, 239)))  # Left of rectangle
-    goal_3 = geometry.Polygon(((203, 239), (260, 239), (260, 182), (203, 182)))  # Top of rectangle
+    goal_3 = geometry.Polygon(((203, 239), (260, 239), (260, 218), (203, 218)))  # Top of rectangle
 
     goals = (goal_1, goal_2, goal_3)
 
@@ -1184,9 +1210,9 @@ def generate_h_level():
 # Level 15: Perspective Pegs
 def generate_pegs_level():
     collision = []
-    points = geometry.make_pentagon(150, (250, 250), -math.pi / 2)
+    points = geometry.regular_polygon(5, 150, (250, 250), -math.pi / 2)
     for point in points.point_list:
-        collision.append(geometry.make_pentagon(50, point, math.pi / 2))
+        collision.append(geometry.regular_polygon(5, 50, point, math.pi / 2))
     collision[0].set_colors((GREEN, RED, BLUE, YELLOW, MAGENTA))
     collision[1].set_colors((GREEN, RED, BLUE, YELLOW, MAGENTA))
     collision[2].set_colors((BLUE, YELLOW, MAGENTA, GREEN, RED))
@@ -1202,30 +1228,228 @@ def generate_pegs_level():
 
     goals = (goal_1, goal_2, goal_3)
 
-    level = levels.Level(collision, goals, (400, 100), math.pi / 4 * 3)
+    level = levels.Level(collision, goals, (300, 150), math.pi / 4 * 3)
     level.set_goal_colors((PALE_MAGENTA, PALE_RED, PALE_GREEN))
 
     return level
 
 
+# Level 16: Reticles
+def generate_reticles_level():
+    # Crosshairs
+    center_x = 150
+    center_y = 150
+    center_radius = 50
+    outer_radius = 100
+
+    collision_1 = geometry.Polygon(((center_x - center_radius, center_y),
+                                    (center_x - outer_radius, center_y)),
+                                   False)  # Left
+
+    collision_2 = geometry.Polygon(((center_x + center_radius, center_y),
+                                    (center_x + outer_radius, center_y)),
+                                   False)  # Right
+
+    collision_3 = geometry.Polygon(((center_x, center_y - center_radius),
+                                    (center_x, center_y - outer_radius)),
+                                   False)  # Up
+
+    collision_4 = geometry.Polygon(((center_x, center_y + center_radius),
+                                    (center_x, center_y + outer_radius)),
+                                   False)  # Down
+
+    # Boxhairs
+    size = 100
+    quarter = size // 4
+    x1 = 250
+    y1 = 250
+    x2 = x1 + size
+    y2 = y1 + size
+    collision_5 = geometry.Polygon(((x1, y1 + quarter), (x1, y2 - quarter)), False)  # Left
+    collision_6 = geometry.Polygon(((x2, y1 + quarter), (x2, y2 - quarter)), False)  # Right
+    collision_7 = geometry.Polygon(((x1 + quarter, y1), (x2 - quarter, y1)), False)  # Up
+    collision_8 = geometry.Polygon(((x1 + quarter, y2), (x2 - quarter, y2)), False)  # Down
+
+    collisions = (collision_1, collision_2, collision_3, collision_4,
+                  collision_5, collision_6, collision_7, collision_8)
+
+    for collision in collisions:
+        collision.set_colors((BLUE, ))
+
+    goal_1 = geometry.two_point_square((center_x - quarter, center_y - quarter),  # Crosshair center
+                                       (center_x + quarter, center_y - quarter), False)
+    goal_2 = geometry.two_point_square((x1, y1 + quarter), (x1, y2 - quarter), True)  # Boxhairs left
+    goal_3 = geometry.two_point_square((x1 + quarter, y1), (x2 - quarter, y1), True)  # Boxhairs up
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = levels.Level(collisions, goals, (400, 400), math.pi)
+    level.set_goal_colors((PALE_BLUE, PALE_CYAN, PALE_GREEN))
+
+    return level
+
+
+# Level 17: Missing corner
+def generate_missing_corner_level():
+    collision_1 = geometry.two_point_square((100, 100), (150, 100), False)  # Top left
+    collision_1.set_colors((GREEN, GREEN, GREEN, GREEN))
+    collision_2 = geometry.two_point_square((100, 350), (150, 350), False)  # Bottom left
+    collision_2.set_colors((GREEN, GREEN, GREEN, GREEN))
+    collision_3 = geometry.two_point_square((350, 350), (400, 350), False)  # Bottom right
+    collision_3.set_colors((GREEN, GREEN, GREEN, GREEN))
+
+    collisions = (collision_1, collision_2, collision_3)
+
+    goal_1 = geometry.two_point_square((350, 350), (300, 350), False)  # Left
+    goal_2 = geometry.two_point_square((350, 300), (400, 300), False)  # Top
+
+    goals = (goal_1, goal_2)
+
+    level = levels.Level(collisions, goals, (53, 86), math.pi / 5)
+    level.set_goal_colors((PALE_GREEN, PALE_CYAN))
+
+    return level
+
+
+# Level 18: Z
+def generate_z_level():
+    collision_1 = geometry.Polygon(((200, 200), (300, 200), (200, 300), (250, 300)), False)
+    collision_1.set_colors((MAGENTA, ORANGE, MAGENTA))
+
+    collisions = (collision_1, )
+
+    goal_1 = geometry.Polygon(((200, 300), (250, 300), (250, 250)))
+    goal_2 = geometry.two_point_square((250, 200), (300, 200), True)
+
+    goals = (goal_1, goal_2)
+
+    level = levels.Level(collisions, goals, (389, 243), math.pi / 5 * 3)
+    level.set_goal_colors((PALE_ORANGE, PALE_MAGENTA))
+
+    return level
+
+
+# Level 19: Increasing
+def generate_increasing_level():
+    collisions = []
+
+    for line in range(5):
+        x = line * 50 + 150
+        y1 = line * 20 + 300
+        y2 = 200 - line * 20
+
+        polygon = geometry.Polygon(((x, y1), (x, y2)), False)
+        polygon.set_colors((ORANGE, ))
+        collisions.append(polygon)
+
+    collisions = tuple(collisions)
+
+    goal_1 = geometry.two_point_square((200, 225), (250, 225), False)
+    goal_2 = geometry.two_point_square((300, 225), (350, 225), False)
+
+    goals = (goal_1, goal_2)
+
+    level = levels.Level(collisions, goals, (345, 412), -math.pi / 3 * 2)
+    level.set_goal_colors((PALE_MAGENTA, PALE_CYAN))
+
+    return level
+
+
+# Level 20: Star
+def generate_star_level():
+    triangle = geometry.regular_polygon(3, 50, (250, 200), -math.pi / 2)
+    near_points = triangle.point_list
+    far_points = []
+
+    for index, segment in enumerate(triangle.segments):
+        middle_x = int((segment.point1[0] + segment.point2[0]) / 2)
+        middle_y = int((segment.point1[1] + segment.point2[1]) / 2)
+
+        segment_angle = geometry.angle_between(segment.point1, segment.point2)
+        perpendicular_angle = segment_angle - math.pi / 2
+        print(segment.point1, segment.point2)
+
+        difference = geometry.vector_to_difference(perpendicular_angle, index * 50 + 100)
+        far_points.append(utility.add_tuples((middle_x, middle_y), difference))
+
+    point_list = []
+    for index in range(3):
+        point_list.append(near_points[index])
+        point_list.append(far_points[index])
+
+    collision_1 = geometry.Polygon(point_list)
+    collision_1.set_colors((GREEN, MAGENTA, GREEN, MAGENTA, GREEN, MAGENTA))
+
+    collisions = (collision_1, )
+
+    # Goal 1 (Between bottom and left spike)
+    # The corner itself
+    point_1 = near_points[2]
+
+    # The point on the green wall
+    angle_2 = geometry.angle_between(point_1, far_points[2])
+    difference_2 = geometry.vector_to_difference(angle_2, 50)
+    point_2 = utility.add_tuples(point_1, difference_2)
+
+    # The point on the magenta wall
+    angle_4 = geometry.angle_between(point_1, far_points[1])
+    difference_4 = geometry.vector_to_difference(angle_4, 50)
+    point_4 = utility.add_tuples(point_1, difference_4)
+
+    # The point not touching any walls
+    angle_3 = (angle_2 + angle_4) / 2
+    difference_3 = geometry.vector_to_difference(angle_3 - math.pi, 50)
+    point_3 = utility.add_tuples(point_1, difference_3)
+
+    goal_1 = geometry.Polygon((point_1, point_2, point_3, point_4))
+
+    # Goal 2 (Top of right spike)
+    point_1 = far_points[0]
+
+    angle_2 = geometry.angle_between(point_1, near_points[0])
+    difference_2 = geometry.vector_to_difference(angle_2, 50)
+    point_2 = utility.add_tuples(point_1, difference_2)
+
+    goal_2 = geometry.two_point_square(point_1, point_2, True)
+
+    # Goal 3 (Bottom of right spike)
+    point_1 = far_points[0]
+
+    angle_2 = geometry.angle_between(point_1, near_points[1])
+    difference_2 = geometry.vector_to_difference(angle_2, 50)
+    point_2 = utility.add_tuples(point_1, difference_2)
+
+    goal_3 = geometry.two_point_square(point_1, point_2, False)
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = levels.Level(collisions, goals, (300, 400), -math.pi / 2)
+    level.set_goal_colors((PALE_MAGENTA, PALE_GREEN, PALE_CYAN))
+
+    return level
+
+
 # Level template
-# L#C0 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#C0.set_colors((color1, color2, color3))
-# L#C1 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#C1.set_colors((color1, color2, color3))
-# L#C2 = geometry.Polygon(((x, y), (x, y)))
-# L#C2.set_colors((color1))
+# def generate_<name>_level():
+#     collision_1 = geometry.Polygon(((x, y), (x, y), (x, y)))
+#     collision_1.set_colors((color1, color2, color3))
+#     collision_2 = geometry.Polygon(((x, y), (x, y), (x, y)))
+#     collision_2.set_colors((color1, color2, color3))
+#     collision_3 = geometry.Polygon(((x, y), (x, y), (x, y)))
+#     collision_3.set_colors((color1, color2, color3))
 #
-# L#_collisions = (L#C0, L#C1, L#C2)
+#     collisions = (collision_1, collision_2, collision_3)
 #
-# L#G0 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#G1 = geometry.Polygon(((x, y), (x, y), (x, y)))
-# L#G2 = geometry.Polygon(((x, y), (x, y), (x, y), (x, y)))
+#     goal_1 = geometry.Polygon(((x, y), (x, y), (x, y)))
+#     goal_2 = geometry.Polygon(((x, y), (x, y), (x, y)))
+#     goal_3 = geometry.Polygon(((x, y), (x, y), (x, y)))
 #
-# L#_goals = (L#G0, L#G1, L#G2)
+#     goals = (goal_1, goal_2, goal_3)
 #
-# L# = levels.Level(L#_collisions, L#_goals, (start_x, start_y), orientation)
-# L#.set_goal_colors((color1, color2, color3))
+#     level = levels.Level(collisions, goals, (start_x, start_y), orientation)
+#     level.set_goal_colors((color1, color2, color3))
+#
+#     return level
 
 
 # level_test_shape1_points = ((100, 100), (400, 200), (350, 400), (100, 200))
@@ -1252,19 +1476,24 @@ all_levels = (generate_three_boxes_level(),
               generate_single_line_level(),
               generate_pentagon_level(),
               generate_wings_level(),
+              generate_reticles_level(),
               generate_two_lines_level(),
+              generate_z_level(),
+              generate_missing_corner_level(),
               generate_buckets_level(),
+              generate_increasing_level(),
               generate_pegs_level(),
               generate_h_level(),
-              generate_boxception_level(),
               generate_hexagon_level(),
-              generate_elbow_level(),
+              generate_boxception_level(),
+              generate_square_level(),
               generate_keyhole_level(),
+              generate_star_level(),
               generate_grid_level()
               )
 last_level = len(all_levels) - 1
 
-play_screen.load_level(0)
+play_screen.load_level(18)
 play_screen.show_player = True
 
 sound.load_music("music")
@@ -1283,8 +1512,8 @@ while True:
         break
     play_screen.draw(final_display)
 
-    debug.debug(clock.get_fps())
-    debug.debug(play_screen.mouse_option)
-    debug.draw(final_display)
+    # debug.debug(clock.get_fps())
+    # debug.debug(play_screen.mouse_option)
+    # debug.draw(final_display)
 
     screen_update(60)

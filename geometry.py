@@ -302,8 +302,8 @@ class Line:
 
 class Polygon:
     def __init__(self, point_list, closed=True):
-        self.point_list = point_list
-        self.segments = points_to_segment_list(point_list, closed)
+        self.point_list = tuple(point_list)
+        self.segments = tuple(points_to_segment_list(point_list, closed))
         self.closed = closed
         self.color = constants.WHITE
 
@@ -342,15 +342,16 @@ def points_to_segment_list(point_list, closed=True):
     return segment_list
 
 
-def make_pentagon(radius, center_point, angle=0.0):
-    """Returns a 5-sided regular Polygon.
+def regular_polygon(sides, radius, center_point, angle=0.0):
+    """Returns a regular Polygon with a given amount of sign.
 
     radius is the distance from the center to any vertex.
-    angle is the rotation of the pentagon, in radians.
+    angle is the rotation of the shape, in radians.  At angle 0.0, the first
+    point is drawn to the very right.
     """
     points = []
-    for point in range(5):
-        point_angle = angle + point * (math.pi * 2 / 5)
+    for point in range(sides):
+        point_angle = angle + point * (math.pi * 2 / sides)
         difference = vector_to_difference(point_angle, radius)
 
         position = utility.add_tuples(center_point, difference)
@@ -383,16 +384,12 @@ def two_point_square(point1, point2, extend_upwards):
         else:
             angle = slope_to_angle(slope) + math.pi / 2
 
-    print(slope)
-    print(angle)
-
     difference = vector_to_difference(angle, distance(point1, point2))
     point3 = utility.add_tuples(point2, difference)
     point4 = utility.add_tuples(point1, difference)
     point3 = utility.int_tuple(point3)
     point4 = utility.int_tuple(point4)
 
-    print(point1, point2, point3, point4)
     return Polygon((point1, point2, point3, point4))
 
 
