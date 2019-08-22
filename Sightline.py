@@ -874,7 +874,8 @@ class PlayScreen:
             self.signals_width = self.SIGNAL_SPACING * self.level.goal_count - self.SIGNAL_GAP
 
             player_entity.go_to(self.level.start_position)
-            player_entity.angle = self.level.start_orientation
+            # slightly offset, "gaps" seem to appear at exact 90 degree angles
+            player_entity.angle = self.level.start_orientation + 0.000001
 
         self.previous_signals = []
 
@@ -1041,6 +1042,7 @@ play_screen.load_level(last_exited_level)
 
 if last_exited_level == 0:
     play_screen.show_player = True
+    play_screen.mouse_lock = 20
 else:
     play_screen.show_player = False
 
