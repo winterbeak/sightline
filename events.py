@@ -24,12 +24,12 @@ class KeyHandler:
         self.queue = []
 
 
-def quit_program():
-    pygame.quit()
-    sys.exit()
+quit_program = False
 
 
 def update():
+    global quit_program
+
     mouse.clicked = False
     mouse.released = False
     mouse.position = pygame.mouse.get_pos()
@@ -60,7 +60,8 @@ def update():
             keys.released_key = event.key
 
         elif event.type == pygame.QUIT:
-            quit_program()
+            quit_program = True
+
     keys.held = len(keys.queue) > 0
     if keys.held:
         keys.held_key = keys.queue[-1]

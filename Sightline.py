@@ -59,12 +59,28 @@ pause_sound = sound.load("pause")
 pause_sound.set_volume(0.75)
 circle_sounds = tuple(sound.load("circle%i" % i) for i in range(1, 9))
 
+title_text = pygame.image.load(os.path.join("images", "title.png"))
+
 level_offset = (0, 50)
 
 zoomed_ripples = ripples.RippleHandler()
 unzoomed_ripples = ripples.RippleHandler()
 
-debug_mode = False
+
+def create_debug_mode_file():
+    file = open("Debug Mode.txt", "w+")
+    file.write("False\n")
+    file.close()
+
+
+if os.path.exists("Debug Mode.txt"):
+    if open("Debug Mode.txt").read().strip() == "True":
+        debug_mode = True
+    else:
+        debug_mode = False
+else:
+    create_debug_mode_file()
+    debug_mode = False
 
 
 def screen_update(fps):
@@ -232,6 +248,64 @@ class Signal:
             self.satisfied = False
 
 
+class TitleScreen:
+    FADE_SPEED = 255 / 120
+
+    def __init__(self):
+        self.text_frame = 0
+        self.fade_wait_frame = 0
+
+        self.alpha = 0.0
+        self.text_alpha = 0.0
+
+        self.fading_out = False
+        self.finished = False
+        self.quit_game = False
+
+    def update(self):
+        if events.mouse.released and not self.fading_out:
+            self.fading_out = True
+            sound.play(circle_sounds[0], 0.8)
+
+        if self.fading_out:
+            self.alpha -= self.FADE_SPEED
+
+            if self.text_alpha > 0.0:
+                self.text_alpha -= self.FADE_SPEED
+                if self.text_alpha < 0.0:
+                    self.text_alpha = 0.0
+
+            if self.alpha <= 0.0:
+                self.alpha = 0.0
+                if self.fade_wait_frame < 15:
+                    self.fade_wait_frame += 1
+                else:
+                    self.finished = True
+
+        elif self.alpha < 255.0:
+            self.alpha += self.FADE_SPEED
+            if self.alpha > 255.0:
+                self.alpha = 255.0
+
+        title_text.set_alpha(self.alpha)
+
+        if self.text_frame < 150.0:
+            self.text_frame += 1
+        elif not self.fading_out and self.text_alpha < 255.0:
+            self.text_alpha += self.FADE_SPEED
+            if self.text_alpha > 255.0:
+                self.text_alpha = 255.0
+
+    def draw(self, surface):
+        utility.blit_vert_center(surface, title_text, 100)
+
+        credits_text = utility.black_text_alpha(subtitle_font, "A game by winterbeak and saiziju.", self.alpha)
+        utility.blit_vert_center(surface, credits_text, 200)
+
+        click_text = utility.black_text_alpha(subtitle_font, "Click to start.", self.text_alpha)
+        utility.blit_vert_center(surface, click_text, 350)
+
+
 class PlayScreen:
     PAUSE_LENGTH = 30
     VERDICT_LENGTH = 75
@@ -260,8 +334,8 @@ class PlayScreen:
                 pygame.Rect(200, 250, 100, 40),  # Exit
                 pygame.Rect(260, 360, 50, 30),  # Show circles
                 pygame.Rect(260, 395, 50, 30),  # Show player
-                pygame.Rect(150, 450, 30, 30),  # Previous level
-                pygame.Rect(320, 450, 30, 30))  # Next level
+                pygame.Rect(130, 440, 30, 30),  # Previous level
+                pygame.Rect(340, 440, 30, 30))  # Next level
 
     TUTORIAL_TEXT = ((TutorialText("This is your sightline.", 20),
                       TutorialText("This is the map.", 455)),
@@ -378,9 +452,9 @@ class PlayScreen:
             if events.mouse.released:
                 if self.level_num == 0 and not self.changing_tutorial_stage:
                     if self.tutorial_stage < 3:
-                        self.changing_tutorial_stage = True
+                        self.next_tutorial_stage()
                     elif self.tutorial_stage == 4:
-                        self.changing_tutorial_stage = True
+                        self.next_tutorial_stage()
 
                         position = utility.add_tuples(player_entity.position, level_offset)
                         zoomed_ripples.create_ripple(position, BLACK, 30, 30)
@@ -401,6 +475,7 @@ class PlayScreen:
                         self.won = False
                     elif self.tutorial_stage == 6:
                         self.next_level_transitioning = True
+                        sound.play(circle_sounds[0], 0.8)
 
                     elif self.placed_signals < self.level.goal_count:
                         self.place_signal(player_entity.position)
@@ -482,6 +557,8 @@ class PlayScreen:
                             self.changing_tutorial_stage = True
                         else:
                             self.next_level_transitioning = True
+
+                        completion_data[self.level_num] = True
                     else:
                         self.previous_signals = self.signals
                         self.clear_signals()
@@ -737,18 +814,22 @@ class PlayScreen:
                 x = constants.SCREEN_MIDDLE[0] + 24
                 surface.blit(text, (x, y))
 
-            text = utility.black_text_alpha(small_font, "Change level", self.pause_alpha)
-            utility.blit_vert_center(surface, text, 455)
+            text = utility.black_text_alpha(subtitle_font, "Change level", self.pause_alpha)
+            utility.blit_vert_center(surface, text, 441)
 
             text = utility.black_text_alpha(subtitle_font, "<", self.pause_alpha)
-            x = constants.SCREEN_MIDDLE[0] - 92
+            x = constants.SCREEN_MIDDLE[0] - 112
             y = self.HITBOXES[self.PREVIOUS_LEVEL].top - 1
             surface.blit(text, (x, y))
 
             text = utility.black_text_alpha(subtitle_font, ">", self.pause_alpha)
-            x = constants.SCREEN_MIDDLE[0] + 79
+            x = constants.SCREEN_MIDDLE[0] + 99
             y = self.HITBOXES[self.PREVIOUS_LEVEL].top - 1
             surface.blit(text, (x, y))
+
+            if self.level_num <= last_level and completion_data[self.level_num]:
+                text = utility.black_text_alpha(small_font, "Completed", self.pause_alpha)
+                utility.blit_vert_center(surface, text, 470)
 
     def pause(self):
         self.paused = True
@@ -768,6 +849,9 @@ class PlayScreen:
         self.placed_signals = 0
 
     def load_level(self, level_num):
+        zoomed_ripples.clear()
+        unzoomed_ripples.clear()
+
         self.next_level_transitioning = False
         self.won = False
 
@@ -790,8 +874,9 @@ class PlayScreen:
             self.signals_width = self.SIGNAL_SPACING * self.level.goal_count - self.SIGNAL_GAP
 
             player_entity.go_to(self.level.start_position)
-            # slightly offset, "gaps" seem to appear at exact 90 degree angles
-            player_entity.angle = self.level.start_orientation + 0.000001
+            player_entity.angle = self.level.start_orientation
+
+        self.previous_signals = []
 
     def place_signal(self, position):
         """Places a circle (known as a Signal earlier in development) onto
@@ -840,13 +925,18 @@ class PlayScreen:
 
         return False
 
+    def next_tutorial_stage(self):
+        self.changing_tutorial_stage = True
+        sound.play(circle_sounds[0], 0.8)
 
+
+title_screen = TitleScreen()
 play_screen = PlayScreen()
 player_entity = player.Player()
 
 all_levels = (levels.generate_three_boxes_level(),
-              levels.generate_jesters_hat_level(),
               levels.generate_triangle_level(),
+              levels.generate_jesters_hat_level(),
               levels.generate_plus_level(),
               levels.generate_single_line_level(),
               levels.generate_pentagon_level(),
@@ -877,28 +967,115 @@ all_levels = (levels.generate_three_boxes_level(),
               )
 last_level = len(all_levels) - 1
 
-play_screen.load_level(0)
-play_screen.show_player = True
+
+def create_save_data():
+    file = open("Easily Editable Save Data.txt", "w+")
+    file.write("0 " + " ".join(("False", ) * len(all_levels)) + "\n")
+    file.close()
+
+
+def load_save_data():
+    if os.path.exists("Easily Editable Save Data.txt"):
+        file = open("Easily Editable Save Data.txt", "r")
+        data = file.read().strip().split()
+
+        # The first number indicates the last level the player was viewing,
+        # so it's useless in this case
+        if len(data) == len(all_levels) + 1:
+            data.pop(0)
+            level_complete = []
+
+            for data in data:
+                if data == "True":
+                    level_complete.append(True)
+                else:
+                    level_complete.append(False)
+
+            return level_complete
+
+        else:
+            create_save_data()
+            return [False, ] * len(all_levels)
+    else:
+        create_save_data()
+        return [False, ] * len(all_levels)
+
+
+def get_last_exited_level():
+    """Returns the level that the player was on when they last
+    exited the application.
+    """
+    if os.path.exists("Easily Editable Save Data.txt"):
+        file = open("Easily Editable Save Data.txt", "r")
+        data = file.read().split()
+        if len(data) == len(all_levels) + 1:
+            if data[0].isnumeric():
+                return int(data[0])
+
+    create_save_data()
+    return 0
+
+
+def save_save_data():
+    string = str(play_screen.level_num) + " "
+    string += " ".join(tuple(str(data) for data in completion_data))
+    string += "\n"
+
+    file = open("Easily Editable Save Data.txt", "w+")
+    file.write(string)
+    file.close()
+
+
+completion_data = load_save_data()
+
+TITLE = 0
+GAME = 1
+
+current_screen = TITLE
+
+last_exited_level = get_last_exited_level()
+if last_exited_level == last_level + 1:
+    last_exited_level = last_level
+
+play_screen.load_level(last_exited_level)
+
+if last_exited_level == 0:
+    play_screen.show_player = True
+else:
+    play_screen.show_player = False
 
 sound.load_music("music")
 sound.play_music()
 
-pygame.event.set_grab(True)
-pygame.mouse.set_visible(False)
-play_screen.mouse_lock = 5
-
 while True:
     events.update()
+    if events.quit_program:
+        break
     sound.update()
 
-    play_screen.update()
-    if play_screen.quit_game:
-        break
-    play_screen.draw(final_display)
+    if current_screen == TITLE:
+        title_screen.update()
+        title_screen.draw(final_display)
+        if title_screen.finished:
+            current_screen = GAME
+
+            pygame.event.set_grab(True)
+            pygame.mouse.set_visible(False)
+            play_screen.alpha = 0.0
+
+        if title_screen.quit_game:
+            break
+
+    elif current_screen == GAME:
+        play_screen.update()
+        if play_screen.quit_game:
+            break
+        play_screen.draw(final_display)
 
     if debug_mode:
         debug.debug(clock.get_fps())
-        debug.debug(player_entity.position)
         debug.draw(final_display)
 
     screen_update(60)
+
+save_save_data()
