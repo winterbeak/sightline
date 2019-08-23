@@ -284,7 +284,10 @@ class Segment:
         else:
             point1 = self.point1
             point2 = self.point2
-        pygame.draw.line(surface, self.color, point1, point2)
+
+        # Experimented with line thickness 2, reduces game-feel but
+        # increases visibility of lines
+        pygame.draw.line(surface, self.color, point1, point2, 2)
 
 
 class Line:
@@ -312,9 +315,10 @@ class Polygon:
             self.segments[index].color = color
 
     def draw_debug(self, surface, offset=(0, 0), color=None):
+        """Draws the polygon.  Does not come with an outline."""
         if not color:
             color = self.color
-        """Draws the polygon.  Does not come with an outline."""
+
         point_list = self.point_list
         if offset != (0, 0):
             point_list = tuple(utility.add_tuples(offset, point) for point in point_list)

@@ -43,6 +43,7 @@ YELLOW = constants.YELLOW
 ORANGE = constants.ORANGE
 
 LIGHT_GREY = constants.LIGHT_GREY
+DARK_GREY = constants.DARK_GREY
 PALE_RED = constants.PALE_RED
 PALE_GREEN = constants.PALE_GREEN
 PALE_BLUE = constants.PALE_BLUE
@@ -102,17 +103,25 @@ def new_ray(position, level, angle):
             debug_point_1 = utility.add_tuples(debug_point_1, level_offset)
             debug_point_2 = player_entity.position
             debug_point_2 = utility.add_tuples(debug_point_2, level_offset)
-            debug.new_line(debug_point_1, debug_point_2)
+            debug.new_line(debug_point_1, debug_point_2, color)
     else:
         color = constants.WHITE
         if debug_mode:
             debug_point_1 = geometry.screen_edge(position, angle)
-            debug_point_1 = utility.add_tuples(debug_point_1, level_offset)
-            debug_point_2 = player_entity.position
-            debug_point_2 = utility.add_tuples(debug_point_2, level_offset)
-            debug.new_line(debug_point_1, debug_point_2)
+            if debug_point_1:
+                debug_point_1 = utility.add_tuples(debug_point_1, level_offset)
+                debug_point_2 = player_entity.position
+                debug_point_2 = utility.add_tuples(debug_point_2, level_offset)
+                debug.new_line(debug_point_1, debug_point_2, BLACK)
 
     return angle, color
+
+
+def debug_collision():
+    for segment in play_screen.level.player_collision:
+        point_1 = utility.add_tuples(segment.point1, level_offset)
+        point_2 = utility.add_tuples(segment.point2, level_offset)
+        debug.new_line(point_1, point_2, DARK_GREY)
 
 
 def draw_view(surface, y):
@@ -128,12 +137,14 @@ def draw_view(surface, y):
     # makes your view shakier when you rub against walls
     # A potential fix I haven't tried is making it so you can't get too close
     # to a wall
+    # Bug: Fixed!  By making it so that the player can't go too close to walls,
+    # it is literally impossible to experience this effect anymore.
     for polygon in play_screen.level.collision:
         for point in polygon.point_list:
             angle = geometry.angle_between(position, point)
-            rays.append(new_ray(position, level, angle - 0.00007))
+            rays.append(new_ray(position, level, angle - 0.00001))
             rays.append(new_ray(position, level, angle))
-            rays.append(new_ray(position, level, angle + 0.00007))
+            rays.append(new_ray(position, level, angle + 0.00001))
 
     rays.sort()  # sorts rays by their angle
 
@@ -704,6 +715,9 @@ class PlayScreen:
 
             draw_view(surface, 50)
 
+            if debug_mode:
+                debug_collision()
+
             unzoomed_ripples.draw(surface)
 
             y = 90
@@ -941,24 +955,24 @@ all_levels = (levels.generate_three_boxes_level(),
               levels.generate_plus_level(),
               levels.generate_single_line_level(),
               levels.generate_pentagon_level(),
-              levels.generate_wings_level(),
-              levels.generate_reticles_level(),
               levels.generate_two_lines_level(),
               levels.generate_tunnel_level(),
-              levels.generate_z_level(),
+              levels.generate_wings_level(),
               levels.generate_buckets_level(),
+              levels.generate_reticles_level(),
               levels.generate_shapes_level(),
               levels.generate_missing_corner_level(),
-              levels.generate_spiral_level(),
+              levels.generate_z_level(),
               levels.generate_increasing_level(),
               levels.generate_pegs_level(),
-              levels.generate_h_level(),
               levels.generate_staircase_level(),
               levels.generate_hexagon_level(),
+              levels.generate_alignment_level(),
+              levels.generate_spiral_level(),
               levels.generate_triangle_array_level(),
+              levels.generate_h_level(),
               levels.generate_boxception_level(),
               levels.generate_cube_level(),
-              levels.generate_positioning_level(),
               levels.generate_square_level(),
               levels.generate_keyhole_level(),
               levels.generate_diamond_level(),
@@ -1074,9 +1088,8 @@ while True:
             break
         play_screen.draw(final_display)
 
-    if debug_mode:
-        debug.debug(clock.get_fps())
-        debug.draw(final_display)
+    debug.debug(clock.get_fps())
+    debug.draw(final_display)
 
     screen_update(60)
 

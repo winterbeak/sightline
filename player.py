@@ -65,45 +65,44 @@ class Player:
         collide = False
 
         move_segment = geometry.Segment(self.position, next_position)
-        for polygon in level.collision:
-            for segment in polygon.segments:
-                if geometry.segments_collide(segment, move_segment):
-                    collide = True
+        for segment in level.player_collision:
+            if geometry.segments_collide(segment, move_segment):
+                collide = True
 
-                    # note: to_wall is None when next_position is on
+                # note: to_wall is None when next_position is on
+                # the wall.
+                to_wall = geometry.point_and_segment(next_position, segment)
+                if to_wall:
+                    vector = geometry.points_to_vector(next_position, to_wall.point1)
+                    difference = geometry.vector_to_difference(vector[0], vector[1] + 1.0)
+                    position = utility.add_tuples(next_position, difference)
+
+                    # bug: sometimes you get stuck trying to slide off the
+                    # end of a line segment
+                    if not self.movement_collides_level(position, level):
+                        self.go_to(position)
+
+                else:
+                    # the next position will either be 1.0 away on one
+                    # side of the wall, or the other.  the correct position
+                    # is chosen by looking at which position doesn't cross
                     # the wall.
-                    to_wall = geometry.point_and_segment(next_position, segment)
-                    if to_wall:
-                        vector = geometry.points_to_vector(next_position, to_wall.point1)
-                        difference = geometry.vector_to_difference(vector[0], vector[1] + 1.0)
-                        position = utility.add_tuples(next_position, difference)
+                    perpendicular = geometry.inverse(segment.slope)
+                    angle = geometry.slope_to_angle(perpendicular)
 
-                        # bug: sometimes you get stuck trying to slide off the
-                        # end of a line segment
-                        if not self.movement_collides_level(position, level):
-                            self.go_to(position)
+                    difference_1 = geometry.vector_to_difference(angle, 1.0)
+                    difference_2 = geometry.vector_to_difference(angle - math.pi, 1.0)
+                    position_1 = utility.add_tuples(next_position, difference_1)
+                    position_2 = utility.add_tuples(next_position, difference_2)
 
+                    segment_1 = geometry.Segment(self.position, position_1)
+                    if geometry.segments_collide(segment, segment_1):
+                        position = position_2
                     else:
-                        # the next position will either be 1.0 away on one
-                        # side of the wall, or the other.  the correct position
-                        # is chosen by looking at which position doesn't cross
-                        # the wall.
-                        perpendicular = geometry.inverse(segment.slope)
-                        angle = geometry.slope_to_angle(perpendicular)
+                        position = position_1
 
-                        difference_1 = geometry.vector_to_difference(angle, 1.0)
-                        difference_2 = geometry.vector_to_difference(angle - math.pi, 1.0)
-                        position_1 = utility.add_tuples(next_position, difference_1)
-                        position_2 = utility.add_tuples(next_position, difference_2)
-
-                        segment_1 = geometry.Segment(self.position, position_1)
-                        if geometry.segments_collide(segment, segment_1):
-                            position = position_2
-                        else:
-                            position = position_1
-
-                        if not self.movement_collides_level(position, level):
-                            self.go_to(position)
+                    if not self.movement_collides_level(position, level):
+                        self.go_to(position)
 
         if not collide:
             self.move(difference)
@@ -127,7 +126,7 @@ class Player:
         self.draw_visor_line(surface, self.angle - FOV / 2, level, offset)
         self.draw_visor_line(surface, self.angle + FOV / 2, level, offset)
 
-        pygame.draw.circle(surface, constants.BLACK, position, 5)
+        pygame.draw.circle(surface, constants.BLACK, position, 7)
 
     def draw_visor_line(self, surface, angle, level, offset=(0, 0)):
         point1 = self.position
@@ -137,6 +136,9 @@ class Player:
             if offset != (0, 0):
                 point1 = utility.add_tuples(point1, offset)
                 point2 = utility.add_tuples(point2, offset)
+
+            # Experimented with line thickness 2, reduces game-feel but
+            # increases visibility of lines
             pygame.draw.line(surface, constants.BLACK, point1, point2)
         else:
             point2 = geometry.screen_edge(self.position, angle, offset)
@@ -144,12 +146,12 @@ class Player:
                 if offset != (0, 0):
                     point1 = utility.add_tuples(point1, offset)
 
+                # Line thickness 2 here as well
                 pygame.draw.line(surface, constants.BLACK, point1, point2)
 
     def movement_collides_level(self, position, level):
         move_segment = geometry.Segment(self.position, position)
-        for polygon in level.collision:
-            for segment in polygon.segments:
-                if geometry.segments_collide(segment, move_segment):
-                    return True
+        for segment in level.player_collision:
+            if geometry.segments_collide(segment, move_segment):
+                return True
         return False

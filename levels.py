@@ -29,10 +29,111 @@ PALE_ORANGE = constants.PALE_ORANGE
 
 
 class Level:
+    WALL_DISTANCE = 6
+
     def __init__(self, collision, goals, start_position, start_orientation):
         self.start_position = start_position
         self.start_orientation = start_orientation
+
+        # Viewable lines
         self.collision = collision
+
+        # Actual collision.  Extends outwards from the viewable lines
+        # since getting too close to one is disorienting
+        self.player_collision = []
+        for polygon in collision:
+            # One side is "inside" the polygon, the other is "outside".  Though
+            # some polygons aren't closed, so there is no "inside" or "outside",
+            # only two sides.
+            segments_side_1 = []
+            segments_side_2 = []
+            for segment in polygon.segments:
+                segment_angle = geometry.angle_between(segment.point1, segment.point2)
+                angle_1 = segment_angle + math.pi / 2
+                angle_2 = segment_angle - math.pi / 2
+
+                # Distance of 5 or lower causes player to get stuck on
+                # some walls, due to how collision works.  6 is fine.
+                difference_1 = geometry.vector_to_difference(angle_1, self.WALL_DISTANCE)
+                difference_2 = geometry.vector_to_difference(angle_2, self.WALL_DISTANCE)
+
+                point_1 = utility.add_tuples(segment.point1, difference_1)
+                point_2 = utility.add_tuples(segment.point2, difference_1)
+                segments_side_1.append(geometry.Segment(point_1, point_2))
+
+                point_1 = utility.add_tuples(segment.point1, difference_2)
+                point_2 = utility.add_tuples(segment.point2, difference_2)
+                segments_side_2.append(geometry.Segment(point_1, point_2))
+
+            # Non-closed polygons are capped off with a sharp edge.
+            if polygon.closed:
+                # Side 1
+                point_list = []
+                for index in range(len(segments_side_1)):
+                    segment_1 = segments_side_1[index]
+                    segment_2 = segments_side_1[index - 1]
+                    point = geometry.segment_extended_intersection(segment_1, segment_2)
+
+                    if point:
+                        point_list.append(point)
+
+                segment_list = geometry.points_to_segment_list(point_list)
+                self.player_collision.extend(segment_list)
+
+                # Side 2
+                point_list = []
+                for index in range(len(segments_side_2)):
+                    segment_1 = segments_side_2[index]
+                    segment_2 = segments_side_2[index - 1]
+                    point = geometry.segment_extended_intersection(segment_1, segment_2)
+
+                    if point:
+                        point_list.append(point)
+
+                segment_list = geometry.points_to_segment_list(point_list)
+                self.player_collision.extend(segment_list)
+
+            else:
+                # Side 1
+                point_list = [segments_side_1[0].point1]
+                for index in range(1, len(segments_side_1)):
+                    segment_1 = segments_side_1[index]
+                    segment_2 = segments_side_1[index - 1]
+                    point = geometry.segment_extended_intersection(segment_1, segment_2)
+
+                    if point:
+                        point_list.append(point)
+                point_list.append(segments_side_1[-1].point2)
+
+                segment_list = geometry.points_to_segment_list(point_list, False)
+                self.player_collision.extend(segment_list)
+
+                # Cap 1
+                point_1 = polygon.point_list[1]
+                point_2 = polygon.point_list[0]
+                cap = self.create_cap(point_1, point_2)
+                self.player_collision.extend(cap)
+
+                # Side 2
+                point_list = [segments_side_2[0].point1]
+                for index in range(1, len(segments_side_2)):
+                    segment_1 = segments_side_2[index]
+                    segment_2 = segments_side_2[index - 1]
+                    point = geometry.segment_extended_intersection(segment_1, segment_2)
+
+                    if point:
+                        point_list.append(point)
+                point_list.append(segments_side_2[-1].point2)
+
+                segment_list = geometry.points_to_segment_list(point_list, False)
+                self.player_collision.extend(segment_list)
+
+                # Cap 2
+                point_1 = polygon.point_list[-2]
+                point_2 = polygon.point_list[-1]
+                cap = self.create_cap(point_1, point_2)
+                self.player_collision.extend(cap)
+
         self.goals = goals
         self.goal_count = len(goals)
 
@@ -54,6 +155,25 @@ class Level:
     def set_goal_colors(self, colors_list):
         for index, color in enumerate(colors_list):
             self.goals[index].color = color
+
+    def create_cap(self, point_1, point_2):
+        """Creates the sharp end of the collision of a line segment.
+
+        The cap will be created on the end of point_2.
+        """
+        angle_2 = geometry.angle_between(point_1, point_2)
+        angle_1 = angle_2 - math.pi / 2
+        angle_3 = angle_2 + math.pi / 2
+        angles = (angle_1, angle_2, angle_3)
+
+        point_list = []
+        for angle in angles:
+            difference = geometry.vector_to_difference(angle, self.WALL_DISTANCE)
+            point = utility.add_tuples(point_2, difference)
+            point_list.append(point)
+
+        segment_list = geometry.points_to_segment_list(point_list, False)
+        return segment_list
 
 
 # Note: these level numbers are in order of creation, not in order of appearance
@@ -251,14 +371,14 @@ def generate_two_lines_level():
 
 # Level 9: Barrier/Wings
 def generate_wings_level():
-    collision_1 = geometry.Polygon(((113, 260), (200, 240), (300, 240), (387, 260)), False)
+    collision_1 = geometry.Polygon(((113, 275), (200, 225), (300, 225), (387, 275)), False)
     collision_1.set_colors((MAGENTA, CYAN, MAGENTA))
 
     collisions = (collision_1, )
 
-    goal_1 = geometry.Polygon(((200, 240), (300, 240), (300, 340), (200, 340)))  # Bottom
-    goal_2 = geometry.Polygon(((113, 260), (200, 240), (180, 153), (93, 173)))  # Top left
-    goal_3 = geometry.Polygon(((387, 260), (300, 240), (320, 153), (407, 173)))  # Top right
+    goal_1 = geometry.two_point_square((200, 225), (300, 225), False)  # Bottom
+    goal_2 = geometry.two_point_square((113, 275), (200, 225), True)  # Top left
+    goal_3 = geometry.two_point_square((300, 225), (387, 275), True)  # Top right
 
     goals = (goal_1, goal_2, goal_3)
 
@@ -427,15 +547,13 @@ def generate_h_level():
 
     collisions = (collision_1, )
 
-    goal_1 = geometry.Polygon(((100, 100), (200, 100), (200, 200), (100, 200)))  # Top left
-    goal_2 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
-    goal_3 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
-    goal_4 = geometry.Polygon(((300, 300), (400, 300), (400, 400), (300, 400)))  # Bottom right
+    goal_1 = geometry.Polygon(((100, 200), (200, 200), (200, 300), (100, 300)))  # Left
+    goal_2 = geometry.Polygon(((300, 200), (400, 200), (400, 300), (300, 300)))  # Right
 
-    goals = (goal_1, goal_2, goal_3, goal_4)
+    goals = (goal_1, goal_2)
 
     level = Level(collisions, goals, (350, 250), math.pi)
-    level.set_goal_colors((PALE_GREEN, PALE_MAGENTA, PALE_CYAN, PALE_YELLOW))
+    level.set_goal_colors((PALE_GREEN, PALE_YELLOW))
 
     return level
 
@@ -729,7 +847,7 @@ def generate_diamond_level():
     return level
 
 
-# Level 23: Positioning
+# Level 23A: Positioning
 def generate_positioning_level():
     collision_1 = geometry.Polygon(((100, 100), (325, 100), (400, 100)), False)  # Top horizontal
     collision_1.set_colors((MAGENTA, GREEN))
@@ -752,6 +870,29 @@ def generate_positioning_level():
 
     level = Level(collisions, goals, (250, 20), math.pi / 2)
     level.set_goal_colors((PALE_YELLOW, PALE_CYAN, PALE_MAGENTA, PALE_RED))
+
+    return level
+
+
+# Level 23B: Alignment
+def generate_alignment_level():
+    collision_1 = geometry.Polygon(((250, 150), (250, 200)), False)  # Middle vertical
+    collision_2 = geometry.Polygon(((150, 250), (200, 250)), False)  # Middle horizontal
+    collision_3 = geometry.Polygon(((50, 350), (100, 350)), False)  # Bottom left
+    collision_4 = geometry.Polygon(((350, 50), (350, 100)), False)  # Top right
+
+    collisions = (collision_1, collision_2, collision_3, collision_4)
+    for collision in collisions:
+        collision.set_colors((MAGENTA, ))
+
+    goal_1 = geometry.two_point_square((225, 225), (275, 225), False)  # Middle
+    goal_2 = geometry.two_point_square((225, 325), (275, 325), False)  # Bottom
+    goal_3 = geometry.two_point_square((325, 225), (375, 225), False)  # Right
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = Level(collisions, goals, (250, 20), math.pi / 2)
+    level.set_goal_colors((PALE_MAGENTA, PALE_YELLOW, PALE_RED))
 
     return level
 
