@@ -290,6 +290,13 @@ class Segment:
         pygame.draw.line(surface, self.color, point1, point2, 2)
 
 
+def segment_priority(segment):
+    color = segment.color
+    if color in utility.color_priority:
+        return utility.color_priority[color]
+    return 0
+
+
 class Line:
     def __init__(self, point, slope):
         self.slope = slope

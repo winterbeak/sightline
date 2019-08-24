@@ -83,3 +83,23 @@ saturated_counterpart = {
     constants.PALE_YELLOW: constants.YELLOW,
     constants.PALE_ORANGE: constants.ORANGE
 }
+
+
+color_priority = {
+    constants.BLACK: 0,
+    constants.RED: 1,
+    constants.GREEN: 2,
+    constants.BLUE: 3,
+    constants.CYAN: 4,
+    constants.MAGENTA: 5,
+    constants.YELLOW: 6,
+    constants.ORANGE: 7,
+    constants.LIGHT_GREY: 8,
+    constants.PALE_RED: 9,
+    constants.PALE_GREEN: 10,
+    constants.PALE_BLUE: 11,
+    constants.PALE_CYAN: 12,
+    constants.PALE_MAGENTA: 13,
+    constants.PALE_YELLOW: 14,
+    constants.PALE_ORANGE: 15
+}

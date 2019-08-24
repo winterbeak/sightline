@@ -35,7 +35,7 @@ class Level:
         self.start_position = start_position
         self.start_orientation = start_orientation
 
-        # Viewable lines
+        # Viewable lines.  Does not correspond to what the player actual hits.
         self.collision = collision
 
         # Actual collision.  Extends outwards from the viewable lines
@@ -134,6 +134,14 @@ class Level:
                 cap = self.create_cap(point_1, point_2)
                 self.player_collision.extend(cap)
 
+        # Viewable lines.  These are sorted by color so that, when they are
+        # drawn, the way they overlap at corners is consistent
+        segment_list = []
+        for polygon in collision:
+            for segment in polygon.segments:
+                segment_list.append(segment)
+        self.segment_list = sorted(segment_list, key=geometry.segment_priority)
+
         self.goals = goals
         self.goal_count = len(goals)
 
@@ -148,9 +156,8 @@ class Level:
                 polygon.draw_debug(surface, offset)
 
     def draw_debug_outline(self, surface, offset=(0, 0)):
-        for polygon in self.collision:
-            for segment in polygon.segments:
-                segment.draw_debug(surface, offset)
+        for segment in self.segment_list:
+            segment.draw_debug(surface, offset)
 
     def set_goal_colors(self, colors_list):
         for index, color in enumerate(colors_list):
