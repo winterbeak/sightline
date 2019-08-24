@@ -336,18 +336,18 @@ def generate_pentagon_level():
 
 # Level 7: Two buckets
 def generate_buckets_level():
-    collision_1 = geometry.Polygon(((100, 100), (100, 400), (400, 400), (400, 100)), False)  # outside
+    collision_1 = geometry.Polygon(((160, 160), (160, 340), (340, 340), (340, 160)), False)  # outside
     collision_1.set_colors((RED, GREEN, BLUE))
-    collision_2 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)), False)
+    collision_2 = geometry.Polygon(((220, 220), (220, 280), (280, 280), (280, 220)), False)  # inside
     collision_2.set_colors((RED, GREEN, BLUE))
 
     collisions = (collision_1, collision_2)
 
-    goal_1 = geometry.Polygon(((200, 200), (200, 300), (300, 300), (300, 200)))  # Center
-    goal_2 = geometry.Polygon(((100, 100), (200, 100), (200, 200), (100, 200)))  # Top left
-    goal_3 = geometry.Polygon(((300, 100), (400, 100), (400, 200), (300, 200)))  # Top right
-    goal_4 = geometry.Polygon(((100, 300), (200, 300), (200, 400), (100, 400)))  # Bottom left
-    goal_5 = geometry.Polygon(((300, 300), (300, 400), (400, 400), (400, 300)))  # Bottom right
+    goal_1 = geometry.two_point_square((220, 220), (280, 220), False)  # Center
+    goal_2 = geometry.two_point_square((160, 160), (220, 160), False)  # Top left
+    goal_3 = geometry.two_point_square((280, 160), (340, 160), False)  # Top right
+    goal_4 = geometry.two_point_square((160, 280), (220, 280), False)  # Bottom left
+    goal_5 = geometry.two_point_square((280, 280), (340, 280), False)  # Bottom right
     goals = (goal_1, goal_2, goal_3, goal_4, goal_5)
 
     level = Level(collisions, goals, (357, 137), math.pi / 3 * 2)
