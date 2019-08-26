@@ -139,7 +139,7 @@ class Player:
 
             # Experimented with line thickness 2, reduces game-feel but
             # increases visibility of lines
-            pygame.draw.line(surface, constants.BLACK, point1, point2)
+            pygame.draw.line(surface, constants.BLACK, point1, point2, 2)
         else:
             point2 = geometry.screen_edge(self.position, angle, offset)
             if point2:
@@ -147,7 +147,7 @@ class Player:
                     point1 = utility.add_tuples(point1, offset)
 
                 # Line thickness 2 here as well
-                pygame.draw.line(surface, constants.BLACK, point1, point2)
+                pygame.draw.line(surface, constants.BLACK, point1, point2, 2)
 
     def movement_collides_level(self, position, level):
         move_segment = geometry.Segment(self.position, position)

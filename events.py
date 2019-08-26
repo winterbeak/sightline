@@ -11,6 +11,8 @@ class MouseHandler:
         self.held = False
         self.position = (0, 0)
         self.relative = (0, 0)
+        self.button = -1
+        self.release_lock = False
 
 
 class KeyHandler:
@@ -41,12 +43,18 @@ def update():
     keys.pressed_key = None
 
     for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        if mouse.release_lock:
+            mouse.release_lock = False
+            mouse.button = -1
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
             mouse.held = True
             mouse.clicked = True
-        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            mouse.button = event.button
+        elif event.type == pygame.MOUSEBUTTONUP:
             mouse.held = False
             mouse.released = True
+            mouse.release_lock = True
 
         elif event.type == pygame.KEYDOWN:
             keys.queue.append(event.key)

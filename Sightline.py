@@ -52,6 +52,9 @@ PALE_MAGENTA = constants.PALE_MAGENTA
 PALE_YELLOW = constants.PALE_YELLOW
 PALE_ORANGE = constants.PALE_ORANGE
 
+LEFT_CLICK = 1
+RIGHT_CLICK = 3
+
 win_sound = sound.load("win")
 win_sound.set_volume(0.8)
 lose_sound = sound.load("lose")
@@ -59,6 +62,8 @@ lose_sound.set_volume(0.8)
 pause_sound = sound.load("pause")
 pause_sound.set_volume(0.75)
 circle_sounds = tuple(sound.load("circle%i" % i) for i in range(1, 9))
+
+remove_sound = sound.load("remove")
 
 title_text = pygame.image.load(os.path.join("images", "title.png"))
 
@@ -274,9 +279,10 @@ class TitleScreen:
         self.quit_game = False
 
     def update(self):
-        if events.mouse.released and not self.fading_out:
-            self.fading_out = True
-            sound.play(circle_sounds[0], 0.8)
+        if events.mouse.released and events.mouse.button == LEFT_CLICK:
+            if not self.fading_out:
+                self.fading_out = True
+                sound.play(circle_sounds[0], 0.8)
 
         if self.fading_out:
             self.alpha -= self.FADE_SPEED
@@ -359,9 +365,10 @@ class PlayScreen:
                       TutorialText("Instead, look at your sightline and", 305),
                       TutorialText("treat movement like an FPS.", 325)),
 
-                     (TutorialText("These colored regions are the goals.", 110),
-                      TutorialText("To win, you must place exactly one circle in each goal.", 455),
-                      TutorialText("Click to place a circle.", 475)),
+                     (TutorialText("These lightly colored regions are the goals.", 100),
+                      TutorialText("To win, place exactly one circle in each goal.", 120),
+                      TutorialText("Left click to place a circle.", 455),
+                      TutorialText("Right click to remove a misplaced circle.", 475)),
 
                      (TutorialText("Great!  But that was a little easy, wasn't it?", 110),
                       TutorialText("Let's hide your character, and the circles, too.", 455),
@@ -460,7 +467,7 @@ class PlayScreen:
 
             player_entity.update_movement(self.level)
 
-            if events.mouse.released:
+            if events.mouse.released and events.mouse.button == LEFT_CLICK:
                 if self.level_num == 0 and not self.changing_tutorial_stage:
                     if self.tutorial_stage < 3:
                         self.next_tutorial_stage()
@@ -468,17 +475,17 @@ class PlayScreen:
                         self.next_tutorial_stage()
 
                         position = utility.add_tuples(player_entity.position, level_offset)
-                        zoomed_ripples.create_ripple(position, BLACK, 30, 30)
+                        zoomed_ripples.create_ripple(position, BLACK, 30, 45)
 
                         for signal in self.signals:
                             position = utility.add_tuples(signal.position, level_offset)
-                            zoomed_ripples.create_ripple(position, signal.color, 30, 30)
+                            zoomed_ripples.create_ripple(position, signal.color, 30, 45)
 
                         for index in range(self.level.goal_count):
                             x = constants.SCREEN_MIDDLE_INT[0] - self.signals_width // 2
                             x += index * self.SIGNAL_SPACING + Signal.RADIUS
 
-                            unzoomed_ripples.create_ripple((x, 90), self.signals[index].color, 30, 30)
+                            unzoomed_ripples.create_ripple((x, 90), self.signals[index].color, 30, 45)
 
                         self.show_player = False
 
@@ -494,6 +501,9 @@ class PlayScreen:
                 elif self.level_num != 0:
                     if self.placed_signals < self.level.goal_count:
                         self.place_signal(player_entity.position)
+
+            elif events.mouse.released and events.mouse.button == RIGHT_CLICK:
+                self.remove_signal()
 
             if self.changing_tutorial_stage and self.text_alpha > 0:
                 self.text_alpha -= self.text_alpha_change
@@ -554,14 +564,14 @@ class PlayScreen:
                             position = utility.add_tuples(signal.position, level_offset)
                             position = utility.int_tuple(position)
 
-                            zoomed_ripples.create_ripple(position, color, 30, 30)
+                            zoomed_ripples.create_ripple(position, color, 30, 45)
 
                         if self.won:
                             color = signal.color
                         else:
                             color = BLACK
 
-                        unzoomed_ripples.create_ripple((x, y), color, 30, 30)
+                        unzoomed_ripples.create_ripple((x, y), color, 30, 45)
 
                     if self.won:
                         if self.level_num == 0 and (self.tutorial_stage == 3 or self.tutorial_stage == 5):
@@ -614,13 +624,14 @@ class PlayScreen:
             else:
                 is_volume = self.mouse_option == self.VOLUME_SLIDER
                 is_sensitivity = self.mouse_option == self.SENSITIVITY_SLIDER
+                mouse_held = events.mouse.held and events.mouse.button == LEFT_CLICK
 
-                if (is_volume or is_sensitivity) and events.mouse.held:
+                if (is_volume or is_sensitivity) and mouse_held:
                     pass
                 else:
                     self.mouse_option = -1
 
-            if events.mouse.released:
+            if events.mouse.released and events.mouse.button == LEFT_CLICK:
                 if self.mouse_option == self.RESUME:
                     self.unpause()
 
@@ -641,7 +652,7 @@ class PlayScreen:
                     if self.level_num <= last_level:
                         self.load_level(self.level_num + 1)
 
-            if events.mouse.held:
+            if events.mouse.held and events.mouse.button == LEFT_CLICK:
                 if self.mouse_option == self.SENSITIVITY_SLIDER:
                     rect = self.HITBOXES[self.SENSITIVITY_SLIDER]
                     x = events.mouse.position[0] - rect.left
@@ -912,7 +923,7 @@ class PlayScreen:
             if self.show_circles and self.previous_signals:
                 for signal in self.previous_signals:
                     position = utility.add_tuples(signal.position, level_offset)
-                    zoomed_ripples.create_ripple(position, signal.color, 30, 30)
+                    zoomed_ripples.create_ripple(position, signal.color, 30, 45)
             self.previous_signals = []
 
             self.verdict_frame = 0
@@ -927,6 +938,12 @@ class PlayScreen:
                 self.won = True
             else:
                 sound.play(lose_sound)
+
+    def remove_signal(self):
+        if 1 <= self.placed_signals < self.level.goal_count:
+            del self.signals[-1]
+            self.placed_signals -= 1
+            sound.play(circle_sounds[self.placed_signals])
 
     def check_win(self):
         for polygon in self.level.goals:
@@ -971,13 +988,13 @@ all_levels = (levels.generate_three_boxes_level(),
               levels.generate_spiral_level(),
               levels.generate_triangle_array_level(),
               levels.generate_h_level(),
-              levels.generate_boxception_level(),
               levels.generate_cube_level(),
+              levels.generate_boxception_level(),
               levels.generate_square_level(),
-              levels.generate_keyhole_level(),
               levels.generate_diamond_level(),
-              levels.generate_star_level(),
               levels.generate_grid_level(),
+              levels.generate_keyhole_level(),
+              levels.generate_star_level(),
               levels.generate_heart_level()
               )
 last_level = len(all_levels) - 1
@@ -1088,8 +1105,9 @@ while True:
             break
         play_screen.draw(final_display)
 
-    debug.debug(clock.get_fps())
-    debug.draw(final_display)
+    if debug_mode:
+        debug.debug(clock.get_fps())
+        debug.draw(final_display)
 
     screen_update(60)
 
