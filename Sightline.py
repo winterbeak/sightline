@@ -62,8 +62,7 @@ lose_sound.set_volume(0.8)
 pause_sound = sound.load("pause")
 pause_sound.set_volume(0.75)
 circle_sounds = tuple(sound.load("circle%i" % i) for i in range(1, 9))
-
-remove_sound = sound.load("remove")
+remove_sounds = tuple(sound.load("remove%i" % i) for i in range(1, 5))
 
 title_text = pygame.image.load(os.path.join("images", "title.png"))
 
@@ -943,7 +942,7 @@ class PlayScreen:
         if 1 <= self.placed_signals < self.level.goal_count:
             del self.signals[-1]
             self.placed_signals -= 1
-            sound.play(circle_sounds[self.placed_signals])
+            sound.play(remove_sounds[self.placed_signals])
 
     def check_win(self):
         for polygon in self.level.goals:
