@@ -64,7 +64,7 @@ def set_music_volume(volume):
 
 
 def pathify(string):
-    return os.path.join("sounds", string + ".wav")
+    return os.path.join("sounds", string + ".ogg")
 
 
 def load(string):
