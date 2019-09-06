@@ -947,18 +947,34 @@ def generate_diamond_level():
 
 # Level 22 Nerfed: Diamond
 def generate_nerfed_diamond_level():
-    collision_1 = geometry.Polygon(((325, 250), (325, 325), (250, 325)), False)  # Bottom right
-    collision_1.set_colors((YELLOW, YELLOW))
-    collision_2 = geometry.Polygon(((200, 125), (200, 200), (125, 200)), False)  # Top left
-    collision_2.set_colors((YELLOW, YELLOW))
+    collisions = []
+    goals = []
 
-    collisions = (collision_1, collision_2)
+    corners = ((350, 350), (225, 225))
 
-    goal_1 = geometry.two_point_square((250, 250), (325, 250), False)  # In square
-    goal_2 = geometry.two_point_square((200, 125), (200, 200), False)  # Right
-    goal_3 = geometry.two_point_square((200, 200), (125, 200), False)  # Down
+    angle_1 = -math.pi / 2 - 0.3
+    angle_2 = math.pi + 0.3
 
-    goals = (goal_1, goal_2, goal_3)
+    first_corner = True
+    for corner in corners:
+        difference_1 = geometry.vector_to_difference(angle_1, 100)
+        difference_2 = geometry.vector_to_difference(angle_2, 100)
+        point_1 = utility.add_tuples(corner, difference_1)
+        point_2 = utility.add_tuples(corner, difference_2)
+        point_1 = utility.int_tuple(point_1)
+        point_2 = utility.int_tuple(point_2)
+
+        polygon = geometry.Polygon((point_1, corner, point_2), False)
+        polygon.set_colors((YELLOW, YELLOW))
+        collisions.append(polygon)
+
+        if first_corner:
+            first_corner = False
+            goals.append(geometry.Polygon((point_1, corner, point_2)))
+
+        else:
+            goals.append(geometry.two_point_square(point_1, corner, True))
+            goals.append(geometry.two_point_square(point_2, corner, False))
 
     level = Level(collisions, goals, (250, 250), -math.pi / 4 * 3)
     level.set_goal_colors((PALE_CYAN, PALE_GREEN, PALE_YELLOW))
