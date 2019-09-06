@@ -460,15 +460,15 @@ def generate_square_level():
 
 # Level 11C: Flag
 def generate_flag_level():
-    collision_1 = geometry.Polygon(((200, 200), (300, 200),
-                                    (300, 300), (250, 250), (200, 300)))
+    collision_1 = geometry.Polygon(((200, 175), (300, 175),
+                                    (300, 325), (250, 250), (200, 325)))
     collision_1.set_colors((ORANGE, CYAN, ORANGE, ORANGE, CYAN))
 
     collisions = (collision_1, )
 
-    goal_1 = geometry.Polygon(((200, 300), (250, 250), (300, 300)))  # Inside
-    goal_2 = geometry.two_point_square((200, 250), (200, 300), True)  # Left
-    goal_3 = geometry.two_point_square((300, 250), (300, 300), False)  # Right
+    goal_1 = geometry.Polygon(((200, 325), (250, 250), (300, 325)))  # Inside
+    goal_2 = geometry.Polygon(((150, 250), (200, 250), (200, 325), (150, 325)))  # Left
+    goal_3 = geometry.Polygon(((300, 250), (350, 250), (350, 325), (300, 325)))  # Right
 
     goals = (goal_1, goal_2, goal_3)
 
