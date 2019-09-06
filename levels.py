@@ -458,6 +458,26 @@ def generate_square_level():
     return level
 
 
+# Level 11C: Flag
+def generate_flag_level():
+    collision_1 = geometry.Polygon(((200, 200), (300, 200),
+                                    (300, 300), (250, 250), (200, 300)))
+    collision_1.set_colors((ORANGE, CYAN, ORANGE, ORANGE, CYAN))
+
+    collisions = (collision_1, )
+
+    goal_1 = geometry.Polygon(((200, 300), (250, 250), (300, 300)))  # Inside
+    goal_2 = geometry.two_point_square((200, 250), (200, 300), True)  # Left
+    goal_3 = geometry.two_point_square((300, 250), (300, 300), False)  # Right
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = Level(collisions, goals, (400, 50), math.pi / 4 * 3)
+    level.set_goal_colors((PALE_ORANGE, PALE_CYAN, PALE_YELLOW))
+
+    return level
+
+
 # Level 12: Grid
 def generate_grid_level():
     margin = 50
@@ -538,6 +558,49 @@ def generate_keyhole_level():
     return level
 
 
+# Level 13 Nerfed: Warning sign/keyhole
+def generate_nerfed_keyhole_level():
+    collisions = []
+
+    collision_1 = geometry.Polygon(((203, 239), (260, 239), (260, 260), (203, 260)))  # Rectangle
+    collision_1.set_colors((CYAN, CYAN, CYAN, CYAN))
+
+    collisions.append(collision_1)
+
+    triangle = geometry.regular_polygon(3, 180, (210, 250), 0.0)
+    points = triangle.point_list
+
+    for index in range(3):
+        angle_1 = geometry.angle_between(points[index], points[index - 1])
+        if index != 2:
+            angle_2 = geometry.angle_between(points[index], points[index + 1])
+        else:
+            angle_2 = geometry.angle_between(points[index], points[0])
+
+        difference_1 = geometry.vector_to_difference(angle_1, 100)
+        difference_2 = geometry.vector_to_difference(angle_2, 100)
+        point_1 = utility.add_tuples(points[index], difference_1)
+        point_2 = utility.add_tuples(points[index], difference_2)
+        point_1 = utility.int_tuple(point_1)
+        point_2 = utility.int_tuple(point_2)
+
+        polygon = geometry.Polygon((point_1, points[index], point_2), False)
+        polygon.set_colors((GREEN, GREEN))
+
+        collisions.append(polygon)
+
+    goal_1 = geometry.Polygon(((390, 250), (341, 222), (341, 278)))  # Right corner
+    goal_2 = geometry.Polygon(((203, 239), (203, 260), (182, 260), (182, 239)))  # Left of rectangle
+    goal_3 = geometry.Polygon(((203, 239), (260, 239), (260, 218), (203, 218)))  # Top of rectangle
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = Level(collisions, goals, (150, 150), math.pi / 4)
+    level.set_goal_colors((PALE_GREEN, PALE_CYAN, PALE_YELLOW))
+
+    return level
+
+
 # Level 14: H
 def generate_h_level():
     collision_1 = geometry.Polygon(((100, 100), (200, 100), (200, 200),  # Starts with top left horizontal,
@@ -561,6 +624,34 @@ def generate_h_level():
 
     level = Level(collisions, goals, (350, 250), math.pi)
     level.set_goal_colors((PALE_GREEN, PALE_YELLOW))
+
+    return level
+
+
+# Level 14 Nerfed: H
+def generate_nerfed_h_level():
+    collision_1 = geometry.Polygon(((100, 100), (200, 100), (200, 200),  # Starts with top left horizontal,
+                                    (300, 200), (300, 100), (400, 100),  # travels clockwise
+                                    (400, 200), (400, 300), (400, 400),  # Bottom right
+                                    (300, 400), (300, 300), (200, 300),
+                                    (200, 400), (100, 400), (100, 300),
+                                    (100, 200)))
+    collision_1.set_colors((YELLOW,
+                            GREEN, CYAN, GREEN,  # Bucket at top of the H
+                            CYAN, GREEN, YELLOW, GREEN, YELLOW,
+                            GREEN, CYAN, GREEN,  # Bucket at bottom of the H
+                            CYAN, GREEN, YELLOW, GREEN))
+
+    collisions = (collision_1, )
+
+    goal_1 = geometry.Polygon(((100, 200), (200, 200), (200, 300), (100, 300)))  # Left
+    goal_2 = geometry.Polygon(((200, 200), (300, 200), (300, 300), (200, 300)))  # Middle
+    goal_3 = geometry.Polygon(((300, 200), (400, 200), (400, 300), (300, 300)))  # Right
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = Level(collisions, goals, (125, 125), math.pi / 2 + 0.03)
+    level.set_goal_colors((PALE_GREEN, PALE_CYAN, PALE_YELLOW))
 
     return level
 
@@ -849,6 +940,27 @@ def generate_diamond_level():
     goals = (goal_1, goal_2, goal_3)
 
     level = Level(collisions, goals, (250, 250), math.pi)
+    level.set_goal_colors((PALE_CYAN, PALE_GREEN, PALE_YELLOW))
+
+    return level
+
+
+# Level 22 Nerfed: Diamond
+def generate_nerfed_diamond_level():
+    collision_1 = geometry.Polygon(((325, 250), (325, 325), (250, 325)), False)  # Bottom right
+    collision_1.set_colors((YELLOW, YELLOW))
+    collision_2 = geometry.Polygon(((200, 125), (200, 200), (125, 200)), False)  # Top left
+    collision_2.set_colors((YELLOW, YELLOW))
+
+    collisions = (collision_1, collision_2)
+
+    goal_1 = geometry.two_point_square((250, 250), (325, 250), False)  # In square
+    goal_2 = geometry.two_point_square((200, 125), (200, 200), False)  # Right
+    goal_3 = geometry.two_point_square((200, 200), (125, 200), False)  # Down
+
+    goals = (goal_1, goal_2, goal_3)
+
+    level = Level(collisions, goals, (250, 250), -math.pi / 4 * 3)
     level.set_goal_colors((PALE_CYAN, PALE_GREEN, PALE_YELLOW))
 
     return level
