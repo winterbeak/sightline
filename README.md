@@ -5,7 +5,7 @@ A minimalist puzzle game about visualizing one less dimension than we're used to
 
 ## Notes
 - Won 8th place overall in the [2019 GMTK Game Jam](https://itch.io/jam/gmtk-2019/results), out of 2589 entries
-- Comes with 30 levels, each designed to with a unique challenge in mind
+- Comes with 30 levels, each designed with a unique challenge in mind
 - Implements a raycasting algorithm to render one-dimensional vision
 - Features sounds by the talented [saiziju](https://saiziju.itch.io/)
 
