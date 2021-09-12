@@ -1,5 +1,5 @@
 # Sightline
-A puzzle game about viewing the world with one less dimension.
+A minimalist puzzle game about visualizing one less dimension than we're used to.
 
 ![GIF demonstrating the one-dimensional sight](./readme_images/demo.gif)
 
